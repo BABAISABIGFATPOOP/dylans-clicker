@@ -184,6 +184,201 @@
             border-color: #888;
         }
 
+        .prestige-display {
+            position: fixed;
+            top: 50px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            padding: 10px 15px;
+            z-index: 99;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            max-width: 180px;
+        }
+
+        .prestige-display:hover {
+            border-color: #ffec8b;
+            transform: scale(1.05);
+        }
+
+        .prestige-display .icon {
+            font-size: 1.8rem;
+            display: block;
+            animation: prestige-glow 3s infinite;
+        }
+
+        @keyframes prestige-glow {
+            0%, 100% { filter: drop-shadow(0 0 5px #ffd700); }
+            50% { filter: drop-shadow(0 0 15px #ffd700); }
+        }
+
+        .prestige-display .count {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .prestige-display .potential {
+            color: #aaa;
+            font-size: 0.75rem;
+            margin-top: 3px;
+        }
+
+        .prestige-display .potential span {
+            color: #7fff00;
+        }
+
+        .prestige-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .prestige-modal.show {
+            display: flex;
+        }
+
+        .prestige-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d1f3d 100%);
+            border: 3px solid #ffd700;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            text-align: center;
+        }
+
+        .prestige-title {
+            font-size: 2rem;
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .prestige-info {
+            color: #ccc;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .prestige-gain {
+            font-size: 1.5rem;
+            color: #7fff00;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .prestige-multiplier {
+            color: #ffd700;
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+
+        .prestige-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .prestige-btn {
+            padding: 12px 30px;
+            border: 2px solid;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .prestige-btn.confirm {
+            background: linear-gradient(135deg, #2a5a2a 0%, #1a3a1a 100%);
+            border-color: #7fff00;
+            color: #7fff00;
+        }
+
+        .prestige-btn.confirm:hover {
+            background: linear-gradient(135deg, #3a6a3a 0%, #2a4a2a 100%);
+            transform: scale(1.05);
+        }
+
+        .prestige-btn.confirm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .prestige-btn.cancel {
+            background: linear-gradient(135deg, #5a2a2a 0%, #3a1a1a 100%);
+            border-color: #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        .prestige-btn.cancel:hover {
+            background: linear-gradient(135deg, #6a3a3a 0%, #4a2a2a 100%);
+            transform: scale(1.05);
+        }
+
+        .prestige-upgrades-title {
+            color: #ffd700;
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+            border-top: 1px solid #ffd700;
+            padding-top: 20px;
+        }
+
+        .prestige-upgrade {
+            background: linear-gradient(135deg, #2a2a1a 0%, #1a1a0a 100%);
+            border: 2px solid #4a4a2a;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .prestige-upgrade:hover:not(.disabled):not(.maxed) {
+            border-color: #ffd700;
+        }
+
+        .prestige-upgrade.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .prestige-upgrade.maxed {
+            border-color: #7fff00;
+            opacity: 0.8;
+        }
+
+        .prestige-upgrade .name {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .prestige-upgrade .desc {
+            color: #888;
+            font-size: 0.8rem;
+            margin: 5px 0;
+        }
+
+        .prestige-upgrade .cost {
+            color: #ffec8b;
+            font-size: 0.9rem;
+        }
+
         .solar-system-bar {
             position: fixed;
             top: 50px;
@@ -579,6 +774,36 @@
         <div class="timer" id="toxic-timer">Growing...</div>
     </div>
     <button class="sound-toggle" id="sound-toggle" title="Toggle Sound">🔊</button>
+    <div class="prestige-display" id="prestige-display" title="Click to Rebirth!">
+        <span class="icon">💎</span>
+        <div class="count"><span id="carbon-credits">0</span> Carbon Credits</div>
+        <div class="potential">Rebirth for: <span id="prestige-potential">0</span></div>
+    </div>
+    <div class="prestige-modal" id="prestige-modal">
+        <div class="prestige-content">
+            <h2 class="prestige-title">💎 REBIRTH 💎</h2>
+            <div class="prestige-info">
+                Reset your pollution, upgrades, planets, and solar systems to start fresh with powerful permanent bonuses!
+                <br><br>
+                <strong>You keep:</strong> Carbon Credits, Toxic Waste, Prestige Upgrades
+            </div>
+            <div class="prestige-gain">
+                You will earn: <span id="modal-prestige-gain">0</span> Carbon Credits
+            </div>
+            <div class="prestige-multiplier">
+                Current Prestige Multiplier: x<span id="prestige-mult-display">1</span>
+            </div>
+            <div class="prestige-multiplier">
+                After Rebirth: x<span id="prestige-mult-after">1</span>
+            </div>
+            <div class="prestige-upgrades-title">💎 Prestige Upgrades</div>
+            <div id="prestige-upgrades-shop"></div>
+            <div class="prestige-buttons">
+                <button class="prestige-btn confirm" id="confirm-prestige">REBIRTH</button>
+                <button class="prestige-btn cancel" id="cancel-prestige">Cancel</button>
+            </div>
+        </div>
+    </div>
     <div class="solar-system-bar">
         <span class="solar-system-label">⭐ SOLAR SYSTEM:</span>
         <div id="system-buttons"></div>
@@ -618,6 +843,7 @@
         <div>Total Clicks: <span id="total-clicks">0</span></div>
         <div>Total Pollution: <span id="total-pollution">0</span> tons</div>
         <div>Planets Destroyed: <span id="planets-destroyed">0</span></div>
+        <div style="border-top: 1px solid #ffd700; margin-top: 8px; padding-top: 8px; color: #ffd700;">Rebirths: <span id="times-prestiged">0</span></div>
     </div>
 
     <script>
@@ -959,6 +1185,36 @@
         let toxicDoubleChance = 0;
         let toxicGoldenChance = 0;
 
+        // Prestige System (Rebirth)
+        let carbonCredits = 0;
+        let lifetimePollution = 0; // Tracks pollution across all rebirths
+        let timesPrestiged = 0;
+        let prestigeMultiplier = 1;
+
+        // Prestige Upgrades (permanent across rebirths)
+        const prestigeUpgrades = [
+            { id: 'p_click', name: 'Carbon Fingers', desc: 'x2 click power per level', cost: 1, owned: 0, maxLevel: 10, effect: 'clickMult', value: 2 },
+            { id: 'p_auto', name: 'Carbon Automation', desc: 'x2 auto pollution per level', cost: 1, owned: 0, maxLevel: 10, effect: 'autoMult', value: 2 },
+            { id: 'p_start', name: 'Head Start', desc: 'Start with 1000x more pollution', cost: 2, owned: 0, maxLevel: 5, effect: 'startBonus', value: 1000 },
+            { id: 'p_cheap', name: 'Bulk Discount', desc: 'Upgrades cost 10% less per level', cost: 3, owned: 0, maxLevel: 5, effect: 'costReduction', value: 0.1 },
+            { id: 'p_planet', name: 'Planetary Dominion', desc: 'x1.5 planet multipliers per level', cost: 5, owned: 0, maxLevel: 5, effect: 'planetBoost', value: 1.5 },
+            { id: 'p_toxic', name: 'Radioactive Legacy', desc: 'Start with +1 Toxic Waste per level', cost: 5, owned: 0, maxLevel: 10, effect: 'toxicStart', value: 1 },
+            { id: 'p_time', name: 'Time Dilation', desc: 'Toxic waste grows 25% faster per level', cost: 8, owned: 0, maxLevel: 5, effect: 'toxicSpeed', value: 0.25 },
+            { id: 'p_system', name: 'Interstellar', desc: 'x2 solar system multipliers per level', cost: 10, owned: 0, maxLevel: 5, effect: 'systemBoost', value: 2 },
+            { id: 'p_mega', name: 'Carbon Singularity', desc: 'x10 to everything!', cost: 50, owned: 0, maxLevel: 1, effect: 'megaBoost', value: 10 },
+            { id: 'p_eternal', name: 'Eternal Pollution', desc: 'x100 prestige multiplier!', cost: 100, owned: 0, maxLevel: 1, effect: 'prestigeBoost', value: 100 },
+        ];
+
+        // Prestige multiplier bonuses
+        let prestigeClickMult = 1;
+        let prestigeAutoMult = 1;
+        let prestigeStartBonus = 0;
+        let prestigeCostReduction = 0;
+        let prestigePlanetBoost = 1;
+        let prestigeToxicStart = 0;
+        let prestigeToxicSpeed = 0;
+        let prestigeSystemBoost = 1;
+
         // Sound System
         let soundEnabled = true;
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -981,7 +1237,7 @@
 
             switch(type) {
                 case 'click':
-                    oscillator.frequency.value = 300;
+                    oscillator.frequency.value = 300 + Math.random() * 50;
                     oscillator.type = 'sine';
                     gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
@@ -1034,6 +1290,164 @@
                     oscillator.start(audioCtx.currentTime);
                     oscillator.stop(audioCtx.currentTime + 0.3);
                     break;
+                case 'planet':
+                    // Whoosh sound for planet switching
+                    oscillator.frequency.value = 200;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.3);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.3);
+                    break;
+                case 'system':
+                    // Epic warp sound for solar system travel
+                    oscillator.frequency.value = 100;
+                    oscillator.type = 'sawtooth';
+                    gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.5);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.5);
+                    // Add second tone
+                    setTimeout(() => {
+                        if (audioCtx) {
+                            const osc2 = audioCtx.createOscillator();
+                            const gain2 = audioCtx.createGain();
+                            osc2.connect(gain2);
+                            gain2.connect(audioCtx.destination);
+                            osc2.frequency.value = 600;
+                            osc2.type = 'sine';
+                            gain2.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                            gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                            osc2.start(audioCtx.currentTime);
+                            osc2.stop(audioCtx.currentTime + 0.3);
+                        }
+                    }, 200);
+                    break;
+                case 'destroy':
+                    // Explosion/destruction sound
+                    oscillator.frequency.value = 100;
+                    oscillator.type = 'sawtooth';
+                    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.5);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.5);
+                    break;
+                case 'golden':
+                    // Sparkly golden sound
+                    oscillator.frequency.value = 1200;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.1);
+                    setTimeout(() => {
+                        if (audioCtx) {
+                            const osc2 = audioCtx.createOscillator();
+                            const gain2 = audioCtx.createGain();
+                            osc2.connect(gain2);
+                            gain2.connect(audioCtx.destination);
+                            osc2.frequency.value = 1500;
+                            osc2.type = 'sine';
+                            gain2.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                            gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                            osc2.start(audioCtx.currentTime);
+                            osc2.stop(audioCtx.currentTime + 0.15);
+                        }
+                    }, 80);
+                    setTimeout(() => {
+                        if (audioCtx) {
+                            const osc3 = audioCtx.createOscillator();
+                            const gain3 = audioCtx.createGain();
+                            osc3.connect(gain3);
+                            gain3.connect(audioCtx.destination);
+                            osc3.frequency.value = 1800;
+                            osc3.type = 'sine';
+                            gain3.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                            gain3.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                            osc3.start(audioCtx.currentTime);
+                            osc3.stop(audioCtx.currentTime + 0.2);
+                        }
+                    }, 160);
+                    break;
+                case 'double':
+                    // Power-up double sound
+                    oscillator.frequency.value = 400;
+                    oscillator.type = 'square';
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.15);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.2);
+                    break;
+                case 'milestone':
+                    // Achievement fanfare
+                    const notes = [523, 659, 784, 1047];
+                    notes.forEach((freq, i) => {
+                        setTimeout(() => {
+                            if (audioCtx) {
+                                const osc = audioCtx.createOscillator();
+                                const gain = audioCtx.createGain();
+                                osc.connect(gain);
+                                gain.connect(audioCtx.destination);
+                                osc.frequency.value = freq;
+                                osc.type = 'sine';
+                                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                                osc.start(audioCtx.currentTime);
+                                osc.stop(audioCtx.currentTime + 0.2);
+                            }
+                        }, i * 100);
+                    });
+                    return; // Early return since we're not using the main oscillator
+                case 'error':
+                    // Buzz/error sound
+                    oscillator.frequency.value = 150;
+                    oscillator.type = 'square';
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.2);
+                    break;
+                case 'news':
+                    // Subtle notification blip
+                    oscillator.frequency.value = 600;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.1);
+                    break;
+                case 'prestige':
+                    // Epic rebirth sound - ascending sweep with harmonics
+                    oscillator.frequency.value = 200;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(2000, audioCtx.currentTime + 1);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 1);
+                    // Add harmonic layers
+                    [400, 600, 800].forEach((freq, i) => {
+                        setTimeout(() => {
+                            if (audioCtx) {
+                                const osc = audioCtx.createOscillator();
+                                const gain = audioCtx.createGain();
+                                osc.connect(gain);
+                                gain.connect(audioCtx.destination);
+                                osc.frequency.value = freq;
+                                osc.type = 'sine';
+                                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                                osc.frequency.exponentialRampToValueAtTime(freq * 5, audioCtx.currentTime + 0.8);
+                                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
+                                osc.start(audioCtx.currentTime);
+                                osc.stop(audioCtx.currentTime + 0.8);
+                            }
+                        }, i * 150);
+                    });
+                    return;
             }
         }
 
@@ -1120,6 +1534,238 @@
             if (soundEnabled) playSound('click');
         });
 
+        // Prestige System functions
+        const prestigeDisplay = document.getElementById('prestige-display');
+        const carbonCreditsDisplay = document.getElementById('carbon-credits');
+        const prestigePotentialDisplay = document.getElementById('prestige-potential');
+        const prestigeModal = document.getElementById('prestige-modal');
+        const modalPrestigeGain = document.getElementById('modal-prestige-gain');
+        const prestigeMultDisplay = document.getElementById('prestige-mult-display');
+        const prestigeMultAfter = document.getElementById('prestige-mult-after');
+        const prestigeUpgradesShop = document.getElementById('prestige-upgrades-shop');
+        const confirmPrestigeBtn = document.getElementById('confirm-prestige');
+        const cancelPrestigeBtn = document.getElementById('cancel-prestige');
+
+        function calculatePrestigeGain() {
+            // Need at least 1 trillion total pollution to earn carbon credits
+            if (totalPollution < 1e12) return 0;
+            return Math.floor(Math.pow(totalPollution / 1e12, 0.5));
+        }
+
+        function calculatePrestigeMultiplier(credits) {
+            // Each carbon credit gives +10% multiplier, compounding
+            let mult = 1;
+            for (const upgrade of prestigeUpgrades) {
+                if (upgrade.id === 'p_eternal' && upgrade.owned > 0) {
+                    mult *= upgrade.value;
+                }
+            }
+            return mult * (1 + credits * 0.1);
+        }
+
+        function updatePrestigeDisplay() {
+            carbonCreditsDisplay.textContent = formatNumber(carbonCredits);
+            const potential = calculatePrestigeGain();
+            prestigePotentialDisplay.textContent = potential > 0 ? '+' + formatNumber(potential) : '0';
+            prestigeMultDisplay.textContent = formatNumber(prestigeMultiplier);
+
+            const futureCredits = carbonCredits + potential;
+            const futureMult = calculatePrestigeMultiplier(futureCredits);
+            prestigeMultAfter.textContent = formatNumber(futureMult);
+            modalPrestigeGain.textContent = formatNumber(potential);
+
+            confirmPrestigeBtn.disabled = potential < 1;
+
+            // Update rebirths display
+            const timesPrestigedDisplay = document.getElementById('times-prestiged');
+            if (timesPrestigedDisplay) {
+                timesPrestigedDisplay.textContent = timesPrestiged;
+            }
+        }
+
+        function applyPrestigeUpgrade(upgrade) {
+            switch(upgrade.effect) {
+                case 'clickMult':
+                    prestigeClickMult *= upgrade.value;
+                    break;
+                case 'autoMult':
+                    prestigeAutoMult *= upgrade.value;
+                    break;
+                case 'startBonus':
+                    prestigeStartBonus += Math.log10(upgrade.value);
+                    break;
+                case 'costReduction':
+                    prestigeCostReduction += upgrade.value;
+                    break;
+                case 'planetBoost':
+                    prestigePlanetBoost *= upgrade.value;
+                    break;
+                case 'toxicStart':
+                    prestigeToxicStart += upgrade.value;
+                    break;
+                case 'toxicSpeed':
+                    prestigeToxicSpeed += upgrade.value;
+                    break;
+                case 'systemBoost':
+                    prestigeSystemBoost *= upgrade.value;
+                    break;
+                case 'megaBoost':
+                    prestigeClickMult *= upgrade.value;
+                    prestigeAutoMult *= upgrade.value;
+                    prestigePlanetBoost *= upgrade.value;
+                    break;
+                case 'prestigeBoost':
+                    // Handled in calculatePrestigeMultiplier
+                    break;
+            }
+        }
+
+        function recalculatePrestigeBonuses() {
+            prestigeClickMult = 1;
+            prestigeAutoMult = 1;
+            prestigeStartBonus = 0;
+            prestigeCostReduction = 0;
+            prestigePlanetBoost = 1;
+            prestigeToxicStart = 0;
+            prestigeToxicSpeed = 0;
+            prestigeSystemBoost = 1;
+
+            for (const upgrade of prestigeUpgrades) {
+                for (let i = 0; i < upgrade.owned; i++) {
+                    applyPrestigeUpgrade(upgrade);
+                }
+            }
+        }
+
+        function buyPrestigeUpgrade(upgrade) {
+            if (carbonCredits >= upgrade.cost && upgrade.owned < upgrade.maxLevel) {
+                carbonCredits -= upgrade.cost;
+                upgrade.owned++;
+                upgrade.cost = Math.ceil(upgrade.cost * 2);
+                applyPrestigeUpgrade(upgrade);
+                playSound('unlock');
+                renderPrestigeShop();
+                updatePrestigeDisplay();
+                saveGame();
+            }
+        }
+
+        function renderPrestigeShop() {
+            prestigeUpgradesShop.innerHTML = '';
+            prestigeUpgrades.forEach(upgrade => {
+                const canAfford = carbonCredits >= upgrade.cost;
+                const maxed = upgrade.owned >= upgrade.maxLevel;
+                const div = document.createElement('div');
+                div.className = 'prestige-upgrade' + (!canAfford && !maxed ? ' disabled' : '') + (maxed ? ' maxed' : '');
+                div.innerHTML = `
+                    <div class="name">💎 ${upgrade.name} ${upgrade.owned > 0 ? '(' + upgrade.owned + '/' + upgrade.maxLevel + ')' : ''}</div>
+                    <div class="desc">${upgrade.desc}</div>
+                    <div class="cost">${maxed ? 'MAXED' : 'Cost: ' + upgrade.cost + ' Carbon Credits'}</div>
+                `;
+                if (canAfford && !maxed) {
+                    div.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        buyPrestigeUpgrade(upgrade);
+                    });
+                }
+                prestigeUpgradesShop.appendChild(div);
+            });
+        }
+
+        function doPrestige() {
+            const gain = calculatePrestigeGain();
+            if (gain < 1) return;
+
+            // Award carbon credits
+            carbonCredits += gain;
+            lifetimePollution += totalPollution;
+            timesPrestiged++;
+
+            // Recalculate prestige multiplier
+            prestigeMultiplier = calculatePrestigeMultiplier(carbonCredits);
+
+            // Reset game state
+            pollution = Math.pow(10, prestigeStartBonus); // Start bonus
+            pollutionPerClick = 1;
+            pollutionPerSecond = 0;
+            totalClicks = 0;
+            totalPollution = 0;
+            currentPlanetIndex = 0;
+            currentSystemIndex = 0;
+            planetsDestroyed = 0;
+
+            // Reset upgrades
+            upgrades.forEach(u => {
+                u.owned = 0;
+            });
+
+            // Reset planets
+            planets.forEach((p, i) => {
+                p.unlocked = i === 0;
+                p.pollution = 0;
+                p.destroyed = false;
+                p.newsShown = false;
+            });
+
+            // Reset solar systems
+            solarSystems.forEach((s, i) => {
+                s.unlocked = i === 0;
+            });
+
+            // Reset toxic upgrades costs (but keep the upgrades themselves via toxic waste)
+            // Actually keep toxic waste and toxic upgrades as stated
+
+            // Apply toxic start bonus
+            if (prestigeToxicStart > 0) {
+                toxicWaste += prestigeToxicStart;
+            }
+
+            // Play sound and update
+            playSound('prestige');
+            newsText.innerHTML = `💎 <span>REBIRTH COMPLETE!</span> You transcend with ${formatNumber(gain)} Carbon Credits!`;
+
+            // Close modal and refresh everything
+            prestigeModal.classList.remove('show');
+
+            const planet = getCurrentPlanet();
+            planetNameDisplay.textContent = planet.name;
+            currentPlanetNameDisplay.textContent = planet.name;
+            multiplierDisplay.textContent = `Multiplier: x${planet.multiplier}`;
+            planetsDestroyedDisplay.textContent = planetsDestroyed;
+
+            renderPlanetTabs();
+            renderUpgrades();
+            renderPlanetShop();
+            renderToxicShop();
+            renderSystemButtons();
+            renderSystemShop();
+            updatePrestigeDisplay();
+            updateDisplay();
+            saveGame();
+        }
+
+        prestigeDisplay.addEventListener('click', () => {
+            initAudio();
+            updatePrestigeDisplay();
+            renderPrestigeShop();
+            prestigeModal.classList.add('show');
+        });
+
+        confirmPrestigeBtn.addEventListener('click', () => {
+            doPrestige();
+        });
+
+        cancelPrestigeBtn.addEventListener('click', () => {
+            prestigeModal.classList.remove('show');
+        });
+
+        // Close modal when clicking outside
+        prestigeModal.addEventListener('click', (e) => {
+            if (e.target === prestigeModal) {
+                prestigeModal.classList.remove('show');
+            }
+        });
+
         // Solar System functions
         function getCurrentSystem() {
             return solarSystems[currentSystemIndex];
@@ -1141,8 +1787,12 @@
         function switchSystem(index) {
             if (!solarSystems[index].unlocked) return;
             currentSystemIndex = index;
-            playSound('unlock');
+            playSound('system');
             newsText.innerHTML = `⭐ Traveling to <span>${solarSystems[index].name}</span>... ${solarSystems[index].description}`;
+            const planet = getCurrentPlanet();
+            const system = solarSystems[index];
+            const totalMult = planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * prestigeMultiplier;
+            multiplierDisplay.textContent = `Multiplier: x${formatNumber(totalMult)}`;
             renderSystemButtons();
             updateDisplay();
             saveGame();
@@ -1187,7 +1837,7 @@
         function updateToxicWaste() {
             const now = Date.now();
             const elapsed = now - lastToxicTime;
-            const adjustedTime = toxicWasteTime / toxicWasteSpeedMult;
+            const adjustedTime = toxicWasteTime / (toxicWasteSpeedMult + prestigeToxicSpeed);
 
             if (!toxicWasteReady) {
                 toxicWasteProgress = Math.min(elapsed / adjustedTime, 1);
@@ -1311,7 +1961,9 @@
         }
 
         function getCost(upgrade) {
-            return Math.floor(upgrade.baseCost * Math.pow(1.15, upgrade.owned));
+            const baseCost = Math.floor(upgrade.baseCost * Math.pow(1.15, upgrade.owned));
+            const reduction = Math.min(prestigeCostReduction, 0.9); // Max 90% reduction
+            return Math.floor(baseCost * (1 - reduction));
         }
 
         function formatNumber(num) {
@@ -1375,10 +2027,13 @@
         function switchPlanet(index) {
             if (!planets[index].unlocked) return;
             currentPlanetIndex = index;
+            playSound('planet');
             const planet = getCurrentPlanet();
+            const system = getCurrentSystem();
             planetNameDisplay.textContent = planet.name;
             currentPlanetNameDisplay.textContent = planet.name;
-            multiplierDisplay.textContent = `Multiplier: x${planet.multiplier}`;
+            const totalMult = planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * prestigeMultiplier;
+            multiplierDisplay.textContent = `Multiplier: x${formatNumber(totalMult)}`;
             renderPlanetTabs();
             updatePlanetAppearance();
             updateDisplay();
@@ -1446,9 +2101,11 @@
 
         function updateDisplay() {
             const planet = getCurrentPlanet();
+            const system = getCurrentSystem();
+            const totalMult = planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * prestigeMultiplier;
             pollutionDisplay.textContent = formatNumber(pollution);
-            ppsDisplay.textContent = formatNumber(pollutionPerSecond * planet.multiplier);
-            clickPowerDisplay.textContent = formatNumber(pollutionPerClick * planet.multiplier);
+            ppsDisplay.textContent = formatNumber(pollutionPerSecond * totalMult * toxicAutoMult * toxicPlanetMult * prestigeAutoMult);
+            clickPowerDisplay.textContent = formatNumber(pollutionPerClick * totalMult * toxicClickMult * toxicPlanetMult * prestigeClickMult);
             totalClicksDisplay.textContent = formatNumber(totalClicks);
             totalPollutionDisplay.textContent = formatNumber(totalPollution);
             updatePlanetAppearance();
@@ -1536,7 +2193,7 @@
             initAudio();
             const planet = getCurrentPlanet();
             const system = getCurrentSystem();
-            const amount = pollutionPerClick * planet.multiplier * system.multiplier * toxicClickMult * toxicPlanetMult;
+            const amount = pollutionPerClick * planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * toxicClickMult * toxicPlanetMult * prestigeClickMult * prestigeMultiplier;
             pollution += amount;
             planet.pollution += amount;
             totalClicks++;
@@ -1559,7 +2216,7 @@
             if (pollutionPerSecond > 0) {
                 const planet = getCurrentPlanet();
                 const system = getCurrentSystem();
-                const amount = (pollutionPerSecond * planet.multiplier * system.multiplier * toxicAutoMult * toxicPlanetMult) / 10;
+                const amount = (pollutionPerSecond * planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * toxicAutoMult * toxicPlanetMult * prestigeAutoMult * prestigeMultiplier) / 10;
                 pollution += amount;
                 planet.pollution += amount;
                 totalPollution += amount;
@@ -1595,7 +2252,21 @@
                 soundEnabled,
                 // Solar system data
                 currentSystemIndex,
-                solarSystems: solarSystems.map(s => ({ id: s.id, unlocked: s.unlocked }))
+                solarSystems: solarSystems.map(s => ({ id: s.id, unlocked: s.unlocked })),
+                // Prestige data
+                carbonCredits,
+                lifetimePollution,
+                timesPrestiged,
+                prestigeMultiplier,
+                prestigeUpgrades: prestigeUpgrades.map(u => ({ id: u.id, owned: u.owned, cost: u.cost })),
+                prestigeClickMult,
+                prestigeAutoMult,
+                prestigeStartBonus,
+                prestigeCostReduction,
+                prestigePlanetBoost,
+                prestigeToxicStart,
+                prestigeToxicSpeed,
+                prestigeSystemBoost
             };
             localStorage.setItem('pollutionClickerSave', JSON.stringify(saveData));
         }
@@ -1658,6 +2329,30 @@
                         const system = solarSystems.find(s => s.id === savedSystem.id);
                         if (system) {
                             system.unlocked = savedSystem.unlocked;
+                        }
+                    });
+                }
+
+                // Load prestige data
+                carbonCredits = data.carbonCredits || 0;
+                lifetimePollution = data.lifetimePollution || 0;
+                timesPrestiged = data.timesPrestiged || 0;
+                prestigeMultiplier = data.prestigeMultiplier || 1;
+                prestigeClickMult = data.prestigeClickMult || 1;
+                prestigeAutoMult = data.prestigeAutoMult || 1;
+                prestigeStartBonus = data.prestigeStartBonus || 0;
+                prestigeCostReduction = data.prestigeCostReduction || 0;
+                prestigePlanetBoost = data.prestigePlanetBoost || 1;
+                prestigeToxicStart = data.prestigeToxicStart || 0;
+                prestigeToxicSpeed = data.prestigeToxicSpeed || 0;
+                prestigeSystemBoost = data.prestigeSystemBoost || 1;
+
+                if (data.prestigeUpgrades) {
+                    data.prestigeUpgrades.forEach(savedUpgrade => {
+                        const upgrade = prestigeUpgrades.find(u => u.id === savedUpgrade.id);
+                        if (upgrade) {
+                            upgrade.owned = savedUpgrade.owned;
+                            upgrade.cost = savedUpgrade.cost;
                         }
                     });
                 }
@@ -1852,9 +2547,11 @@
         // Initialize
         loadGame();
         const planet = getCurrentPlanet();
+        const initSystem = getCurrentSystem();
         planetNameDisplay.textContent = planet.name;
         currentPlanetNameDisplay.textContent = planet.name;
-        multiplierDisplay.textContent = `Multiplier: x${planet.multiplier}`;
+        const initTotalMult = planet.multiplier * prestigePlanetBoost * initSystem.multiplier * prestigeSystemBoost * prestigeMultiplier;
+        multiplierDisplay.textContent = `Multiplier: x${formatNumber(initTotalMult)}`;
         planetsDestroyedDisplay.textContent = planetsDestroyed;
         renderPlanetTabs();
         renderUpgrades();
@@ -1863,7 +2560,11 @@
         renderSystemButtons();
         renderSystemShop();
         updateToxicWaste();
+        updatePrestigeDisplay();
         updateDisplay();
+
+        // Update prestige display every 2 seconds
+        setInterval(updatePrestigeDisplay, 2000);
     </script>
 </body>
 </html>
