@@ -184,8 +184,73 @@
             border-color: #888;
         }
 
+        .solar-system-bar {
+            position: fixed;
+            top: 50px;
+            left: 0;
+            right: 380px;
+            background: rgba(0, 0, 0, 0.9);
+            border-bottom: 2px solid #6a0dad;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 98;
+            overflow-x: auto;
+        }
+
+        .solar-system-label {
+            color: #6a0dad;
+            font-weight: bold;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .system-btn {
+            padding: 5px 12px;
+            border: 2px solid #444;
+            border-radius: 15px;
+            background: rgba(30, 0, 50, 0.6);
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .system-btn:hover:not(.locked) {
+            border-color: #6a0dad;
+            color: #fff;
+        }
+
+        .system-btn.active {
+            border-color: #9b30ff;
+            background: rgba(155, 48, 255, 0.3);
+            color: #fff;
+        }
+
+        .system-btn.locked {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .system-multiplier {
+            color: #9b30ff;
+            font-size: 0.7rem;
+        }
+
         .game-container {
-            padding-top: 50px;
+            padding-top: 90px;
+        }
+
+        @media (max-width: 768px) {
+            .solar-system-bar {
+                right: 0;
+                top: 50px;
+            }
+            .game-container {
+                padding-top: 130px;
+            }
         }
 
         .planet-selector {
@@ -514,6 +579,10 @@
         <div class="timer" id="toxic-timer">Growing...</div>
     </div>
     <button class="sound-toggle" id="sound-toggle" title="Toggle Sound">🔊</button>
+    <div class="solar-system-bar">
+        <span class="solar-system-label">⭐ SOLAR SYSTEM:</span>
+        <div id="system-buttons"></div>
+    </div>
     <div class="game-container">
         <div class="main-area">
             <div class="planet-selector" id="planet-tabs"></div>
@@ -540,6 +609,8 @@
             <div id="planet-shop"></div>
             <div class="section-title" style="color: #39ff14; border-color: #39ff14;">☢️ Toxic Waste Upgrades</div>
             <div id="toxic-shop"></div>
+            <div class="section-title" style="color: #9b30ff; border-color: #9b30ff;">⭐ Unlock Solar Systems</div>
+            <div id="system-shop"></div>
         </div>
     </div>
     <div class="stats">
@@ -746,6 +817,111 @@
             }
         ];
 
+        // Solar Systems
+        const solarSystems = [
+            {
+                id: 'sol',
+                name: 'Sol (Home)',
+                icon: '☀️',
+                unlocked: true,
+                cost: 0,
+                multiplier: 1,
+                description: 'Our home solar system'
+            },
+            {
+                id: 'alpha_centauri',
+                name: 'Alpha Centauri',
+                icon: '⭐',
+                unlocked: false,
+                cost: 1e15,
+                multiplier: 10,
+                description: 'Nearest star system - 4.37 light years'
+            },
+            {
+                id: 'trappist',
+                name: 'TRAPPIST-1',
+                icon: '🔴',
+                unlocked: false,
+                cost: 1e17,
+                multiplier: 50,
+                description: '7 Earth-sized planets to pollute!'
+            },
+            {
+                id: 'kepler442',
+                name: 'Kepler-442',
+                icon: '🟠',
+                unlocked: false,
+                cost: 1e19,
+                multiplier: 200,
+                description: 'Super-habitable world - 112 light years'
+            },
+            {
+                id: 'gliese',
+                name: 'Gliese 667C',
+                icon: '🔶',
+                unlocked: false,
+                cost: 1e21,
+                multiplier: 500,
+                description: 'Triple star system - triple pollution!'
+            },
+            {
+                id: 'kepler22',
+                name: 'Kepler-22',
+                icon: '🌊',
+                unlocked: false,
+                cost: 1e23,
+                multiplier: 1000,
+                description: 'Ocean world - pollute the seas!'
+            },
+            {
+                id: 'proxima',
+                name: 'Proxima Centauri',
+                icon: '❤️',
+                unlocked: false,
+                cost: 1e25,
+                multiplier: 2500,
+                description: 'Red dwarf with confirmed exoplanet'
+            },
+            {
+                id: 'tau_ceti',
+                name: 'Tau Ceti',
+                icon: '💛',
+                unlocked: false,
+                cost: 1e27,
+                multiplier: 5000,
+                description: 'Sun-like star - feels like home'
+            },
+            {
+                id: 'andromeda',
+                name: 'Andromeda Gateway',
+                icon: '🌀',
+                unlocked: false,
+                cost: 1e30,
+                multiplier: 25000,
+                description: 'Portal to another galaxy!'
+            },
+            {
+                id: 'void',
+                name: 'The Void Beyond',
+                icon: '🕳️',
+                unlocked: false,
+                cost: 1e35,
+                multiplier: 100000,
+                description: 'The space between realities'
+            },
+            {
+                id: 'origin',
+                name: 'The Origin Point',
+                icon: '💥',
+                unlocked: false,
+                cost: 1e40,
+                multiplier: 1000000,
+                description: 'Where the Big Bang happened'
+            }
+        ];
+
+        let currentSystemIndex = 0;
+
         let currentPlanetIndex = 0;
         let planetsDestroyed = 0;
 
@@ -878,6 +1054,10 @@
             { id: 'antimatter', name: 'Antimatter Engine', icon: '⚛️', desc: '+25,000 tons per click', baseCost: 2500000, owned: 0, type: 'click', power: 25000 },
             { id: 'blackhole', name: 'Black Hole Generator', icon: '🕳️', desc: '+75,000 tons per click', baseCost: 10000000, owned: 0, type: 'click', power: 75000 },
             { id: 'reality', name: 'Reality Corruptor', icon: '🌀', desc: '+200,000 tons per click', baseCost: 50000000, owned: 0, type: 'click', power: 200000 },
+            { id: 'dimension', name: 'Dimension Ripper', icon: '🔮', desc: '+500,000 tons per click', baseCost: 200000000, owned: 0, type: 'click', power: 500000 },
+            { id: 'timeline', name: 'Timeline Polluter', icon: '⏰', desc: '+1.5M tons per click', baseCost: 800000000, owned: 0, type: 'click', power: 1500000 },
+            { id: 'multiverse', name: 'Multiverse Destroyer', icon: '🌌', desc: '+5M tons per click', baseCost: 5000000000, owned: 0, type: 'click', power: 5000000 },
+            { id: 'godhand', name: 'Hand of Pollution God', icon: '✋', desc: '+20M tons per click', baseCost: 50000000000, owned: 0, type: 'click', power: 20000000 },
             // AUTO UPGRADES
             { id: 'factory', name: 'Coal Factory', icon: '🏭', desc: 'Emits 2 tons per second', baseCost: 50, owned: 0, type: 'auto', power: 2 },
             { id: 'cattle', name: 'Cattle Ranch', icon: '🐄', desc: 'Produces 5 tons per second', baseCost: 150, owned: 0, type: 'auto', power: 5 },
@@ -895,7 +1075,13 @@
             { id: 'weather', name: 'Weather Machine', icon: '🌪️', desc: 'Weaponizes 400,000 tons per second', baseCost: 25000000, owned: 0, type: 'auto', power: 400000 },
             { id: 'mindcontrol', name: 'Mind Control Array', icon: '🧠', desc: 'Converts 1M tons per second', baseCost: 80000000, owned: 0, type: 'auto', power: 1000000 },
             { id: 'dystopia', name: 'Dystopian Future', icon: '💀', desc: 'Destroys 3M tons per second', baseCost: 250000000, owned: 0, type: 'auto', power: 3000000 },
-            { id: 'singularity', name: 'Pollution Singularity', icon: '🌑', desc: 'Infinite: 10M tons per second', baseCost: 1000000000, owned: 0, type: 'auto', power: 10000000 }
+            { id: 'singularity', name: 'Pollution Singularity', icon: '🌑', desc: 'Infinite: 10M tons per second', baseCost: 1000000000, owned: 0, type: 'auto', power: 10000000 },
+            { id: 'starship', name: 'Pollution Starship', icon: '🛸', desc: 'Spreads 50M tons per second', baseCost: 8000000000, owned: 0, type: 'auto', power: 50000000 },
+            { id: 'dyson', name: 'Dyson Smog Sphere', icon: '🔆', desc: 'Captures 200M tons per second', baseCost: 50000000000, owned: 0, type: 'auto', power: 200000000 },
+            { id: 'galaxy', name: 'Galactic Polluter', icon: '🌀', desc: 'Corrupts 1B tons per second', baseCost: 500000000000, owned: 0, type: 'auto', power: 1000000000 },
+            { id: 'universal', name: 'Universal Blight', icon: '💫', desc: 'Infects 10B tons per second', baseCost: 5000000000000, owned: 0, type: 'auto', power: 10000000000 },
+            { id: 'entropy', name: 'Entropy Accelerator', icon: '♾️', desc: 'Hastens 100B tons per second', baseCost: 100000000000000, owned: 0, type: 'auto', power: 100000000000 },
+            { id: 'omega', name: 'The Omega Pollutant', icon: '🅾️', desc: 'THE END: 1T tons per second', baseCost: 10000000000000000, owned: 0, type: 'auto', power: 1000000000000 }
         ];
 
         // DOM Elements
@@ -923,6 +1109,8 @@
         const toxicTimerDisplay = document.getElementById('toxic-timer');
         const toxicShop = document.getElementById('toxic-shop');
         const soundToggle = document.getElementById('sound-toggle');
+        const systemButtons = document.getElementById('system-buttons');
+        const systemShop = document.getElementById('system-shop');
 
         // Sound toggle
         soundToggle.addEventListener('click', () => {
@@ -931,6 +1119,69 @@
             soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
             if (soundEnabled) playSound('click');
         });
+
+        // Solar System functions
+        function getCurrentSystem() {
+            return solarSystems[currentSystemIndex];
+        }
+
+        function renderSystemButtons() {
+            systemButtons.innerHTML = '';
+            solarSystems.forEach((system, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'system-btn' + (index === currentSystemIndex ? ' active' : '') + (!system.unlocked ? ' locked' : '');
+                btn.innerHTML = `${system.icon} ${system.name} <span class="system-multiplier">x${formatNumber(system.multiplier)}</span>`;
+                if (system.unlocked) {
+                    btn.addEventListener('click', () => switchSystem(index));
+                }
+                systemButtons.appendChild(btn);
+            });
+        }
+
+        function switchSystem(index) {
+            if (!solarSystems[index].unlocked) return;
+            currentSystemIndex = index;
+            playSound('unlock');
+            newsText.innerHTML = `⭐ Traveling to <span>${solarSystems[index].name}</span>... ${solarSystems[index].description}`;
+            renderSystemButtons();
+            updateDisplay();
+            saveGame();
+        }
+
+        function renderSystemShop() {
+            systemShop.innerHTML = '';
+            solarSystems.forEach((system, index) => {
+                if (index === 0) return; // Skip Sol
+                const canAfford = pollution >= system.cost;
+                const div = document.createElement('div');
+                div.className = 'toxic-upgrade' + (!canAfford && !system.unlocked ? ' disabled' : '') + (system.unlocked ? ' owned' : '');
+                div.style.borderColor = system.unlocked ? '#9b30ff' : '';
+                div.innerHTML = `
+                    <div class="name" style="color: #9b30ff;">${system.icon} ${system.name}</div>
+                    <div class="desc">${system.description}</div>
+                    <div class="desc">x${formatNumber(system.multiplier)} system multiplier</div>
+                    <div class="cost" style="color: #9b30ff;">${system.unlocked ? 'UNLOCKED' : 'Cost: ' + formatNumber(system.cost) + ' tons'}</div>
+                `;
+                if (!system.unlocked && canAfford) {
+                    div.addEventListener('click', () => buySystem(index));
+                }
+                systemShop.appendChild(div);
+            });
+        }
+
+        function buySystem(index) {
+            const system = solarSystems[index];
+            if (pollution >= system.cost && !system.unlocked) {
+                pollution -= system.cost;
+                system.unlocked = true;
+                playSound('unlock');
+                newsText.innerHTML = `⭐ <span>${system.name}</span> UNLOCKED! ${system.description}`;
+                renderSystemButtons();
+                renderSystemShop();
+                updateDisplay();
+                saveGame();
+            }
+        }
 
         // Toxic waste functions
         function updateToxicWaste() {
@@ -1284,7 +1535,8 @@
         globeBtn.addEventListener('click', (e) => {
             initAudio();
             const planet = getCurrentPlanet();
-            const amount = pollutionPerClick * planet.multiplier * toxicClickMult * toxicPlanetMult;
+            const system = getCurrentSystem();
+            const amount = pollutionPerClick * planet.multiplier * system.multiplier * toxicClickMult * toxicPlanetMult;
             pollution += amount;
             planet.pollution += amount;
             totalClicks++;
@@ -1306,7 +1558,8 @@
         setInterval(() => {
             if (pollutionPerSecond > 0) {
                 const planet = getCurrentPlanet();
-                const amount = (pollutionPerSecond * planet.multiplier * toxicAutoMult * toxicPlanetMult) / 10;
+                const system = getCurrentSystem();
+                const amount = (pollutionPerSecond * planet.multiplier * system.multiplier * toxicAutoMult * toxicPlanetMult) / 10;
                 pollution += amount;
                 planet.pollution += amount;
                 totalPollution += amount;
@@ -1339,7 +1592,10 @@
                 toxicPlanetMult,
                 toxicDoubleChance,
                 toxicGoldenChance,
-                soundEnabled
+                soundEnabled,
+                // Solar system data
+                currentSystemIndex,
+                solarSystems: solarSystems.map(s => ({ id: s.id, unlocked: s.unlocked }))
             };
             localStorage.setItem('pollutionClickerSave', JSON.stringify(saveData));
         }
@@ -1391,6 +1647,17 @@
                         if (upgrade) {
                             upgrade.owned = savedUpgrade.owned;
                             upgrade.cost = savedUpgrade.cost;
+                        }
+                    });
+                }
+
+                // Load solar system data
+                currentSystemIndex = data.currentSystemIndex || 0;
+                if (data.solarSystems) {
+                    data.solarSystems.forEach(savedSystem => {
+                        const system = solarSystems.find(s => s.id === savedSystem.id);
+                        if (system) {
+                            system.unlocked = savedSystem.unlocked;
                         }
                     });
                 }
@@ -1508,6 +1775,10 @@
                 antimatter: "Antimatter engine created. Physics textbooks being rewritten with more pollution.",
                 blackhole: "BLACK HOLE GENERATOR ONLINE. Scientists: 'This seems bad.' <span>Deforestation Co.</span>: 'Seems profitable.'",
                 reality: "REALITY ITSELF NOW POLLUTED. <span>Deforestation Co.</span> transcends physical law.",
+                dimension: "DIMENSION RIPPER ONLINE. Other dimensions now experience our pollution.",
+                timeline: "TIMELINE POLLUTER ACTIVATED. The past and future are now equally polluted.",
+                multiverse: "MULTIVERSE DESTROYER ENGAGED. Infinite realities, infinite pollution.",
+                godhand: "THE HAND OF THE POLLUTION GOD MANIFESTS. <span>Deforestation Co.</span> achieves divinity.",
                 factory: "First factory built! The Industrial Revolution 2.0 begins.",
                 cattle: "Cattle ranch established. Methane production: maximum. Cows: confused.",
                 plane: "Airplane fleet takes off! Chemtrails now actual chemicals.",
@@ -1524,7 +1795,13 @@
                 weather: "Weather machine activated! Sunny days are now 'legacy features.'",
                 mindcontrol: "MIND CONTROL ARRAY ONLINE. Everyone loves pollution now. Compliance is happiness.",
                 dystopia: "DYSTOPIAN FUTURE ACHIEVED. <span>Deforestation Co.</span>'s vision is complete.",
-                singularity: "POLLUTION SINGULARITY REACHED. All matter is now pollution. Pollution is all."
+                singularity: "POLLUTION SINGULARITY REACHED. All matter is now pollution. Pollution is all.",
+                starship: "POLLUTION STARSHIP LAUNCHED. <span>Deforestation Co.</span> takes to the stars!",
+                dyson: "DYSON SMOG SPHERE COMPLETE. The sun itself now powers our pollution.",
+                galaxy: "GALACTIC POLLUTER ACTIVATED. The Milky Way will never be the same.",
+                universal: "UNIVERSAL BLIGHT SPREADING. The cosmos darkens with <span>Deforestation Co.</span>'s touch.",
+                entropy: "ENTROPY ACCELERATOR ENGAGED. Heat death comes faster now. 'Efficiency,' says CEO.",
+                omega: "THE OMEGA POLLUTANT RELEASED. This is the end. This is perfection. This is <span>Deforestation Co.</span>"
             }
         };
 
@@ -1583,6 +1860,8 @@
         renderUpgrades();
         renderPlanetShop();
         renderToxicShop();
+        renderSystemButtons();
+        renderSystemShop();
         updateToxicWaste();
         updateDisplay();
     </script>
