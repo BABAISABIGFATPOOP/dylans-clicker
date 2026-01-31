@@ -638,24 +638,37 @@
         const upgrades = [
             // CLICK UPGRADES
             { id: 'car', name: 'Old Car', icon: '🚗', desc: '+1 ton per click', baseCost: 15, owned: 0, type: 'click', power: 1 },
-            { id: 'truck', name: 'Diesel Truck', icon: '🚛', desc: '+5 tons per click', baseCost: 100, owned: 0, type: 'click', power: 5 },
-            { id: 'nuke', name: 'Nuclear Plant', icon: '☢️', desc: '+25 tons per click', baseCost: 750, owned: 0, type: 'click', power: 25 },
-            { id: 'rocket', name: 'Rocket Launch', icon: '🚀', desc: '+100 tons per click', baseCost: 5000, owned: 0, type: 'click', power: 100 },
-            { id: 'chemical', name: 'Chemical Spill', icon: '🧪', desc: '+200 tons per click', baseCost: 12000, owned: 0, type: 'click', power: 200 },
-            { id: 'volcano', name: 'Volcano Drill', icon: '🌋', desc: '+500 tons per click', baseCost: 35000, owned: 0, type: 'click', power: 500 },
-            { id: 'nuke_test', name: 'Nuclear Test', icon: '💥', desc: '+1,000 tons per click', baseCost: 100000, owned: 0, type: 'click', power: 1000 },
-            { id: 'asteroid', name: 'Asteroid Mining', icon: '☄️', desc: '+2,500 tons per click', baseCost: 300000, owned: 0, type: 'click', power: 2500 },
-            { id: 'blackhole', name: 'Black Hole Generator', icon: '🕳️', desc: '+10,000 tons per click', baseCost: 2000000, owned: 0, type: 'click', power: 10000 },
+            { id: 'suv', name: 'Gas Guzzler SUV', icon: '🚙', desc: '+3 tons per click', baseCost: 50, owned: 0, type: 'click', power: 3 },
+            { id: 'truck', name: 'Diesel Truck', icon: '🚛', desc: '+8 tons per click', baseCost: 150, owned: 0, type: 'click', power: 8 },
+            { id: 'jet', name: 'Private Jet', icon: '🛩️', desc: '+20 tons per click', baseCost: 500, owned: 0, type: 'click', power: 20 },
+            { id: 'nuke', name: 'Nuclear Plant', icon: '☢️', desc: '+50 tons per click', baseCost: 1500, owned: 0, type: 'click', power: 50 },
+            { id: 'cruise', name: 'Cruise Ship', icon: '🚢', desc: '+120 tons per click', baseCost: 5000, owned: 0, type: 'click', power: 120 },
+            { id: 'rocket', name: 'Rocket Launch', icon: '🚀', desc: '+300 tons per click', baseCost: 15000, owned: 0, type: 'click', power: 300 },
+            { id: 'chemical', name: 'Chemical Spill', icon: '🧪', desc: '+700 tons per click', baseCost: 40000, owned: 0, type: 'click', power: 700 },
+            { id: 'volcano', name: 'Volcano Drill', icon: '🌋', desc: '+1,500 tons per click', baseCost: 100000, owned: 0, type: 'click', power: 1500 },
+            { id: 'nuke_test', name: 'Nuclear Test', icon: '💥', desc: '+4,000 tons per click', baseCost: 300000, owned: 0, type: 'click', power: 4000 },
+            { id: 'asteroid', name: 'Asteroid Mining', icon: '☄️', desc: '+10,000 tons per click', baseCost: 800000, owned: 0, type: 'click', power: 10000 },
+            { id: 'antimatter', name: 'Antimatter Engine', icon: '⚛️', desc: '+25,000 tons per click', baseCost: 2500000, owned: 0, type: 'click', power: 25000 },
+            { id: 'blackhole', name: 'Black Hole Generator', icon: '🕳️', desc: '+75,000 tons per click', baseCost: 10000000, owned: 0, type: 'click', power: 75000 },
+            { id: 'reality', name: 'Reality Corruptor', icon: '🌀', desc: '+200,000 tons per click', baseCost: 50000000, owned: 0, type: 'click', power: 200000 },
             // AUTO UPGRADES
             { id: 'factory', name: 'Coal Factory', icon: '🏭', desc: 'Emits 2 tons per second', baseCost: 50, owned: 0, type: 'auto', power: 2 },
-            { id: 'plane', name: 'Airplane Fleet', icon: '✈️', desc: 'Emits 10 tons per second', baseCost: 300, owned: 0, type: 'auto', power: 10 },
-            { id: 'tanker', name: 'Oil Tanker', icon: '🛢️', desc: 'Spills 50 tons per second', baseCost: 1500, owned: 0, type: 'auto', power: 50 },
-            { id: 'powerplant', name: 'Coal Power Plant', icon: '⚡', desc: 'Burns 200 tons per second', baseCost: 8000, owned: 0, type: 'auto', power: 200 },
-            { id: 'deforest', name: 'Deforestation Co.', icon: '🪓', desc: 'Releases 800 tons per second', baseCost: 40000, owned: 0, type: 'auto', power: 800 },
-            { id: 'oilrig', name: 'Offshore Oil Rig', icon: '🛢️', desc: 'Pumps 3,000 tons per second', baseCost: 200000, owned: 0, type: 'auto', power: 3000 },
-            { id: 'megacorp', name: 'Mega Corporation', icon: '🏢', desc: 'Pollutes 15,000 tons per second', baseCost: 1000000, owned: 0, type: 'auto', power: 15000 },
-            { id: 'government', name: 'Corrupt Government', icon: '🏛️', desc: 'Ignores 75,000 tons per second', baseCost: 5000000, owned: 0, type: 'auto', power: 75000 },
-            { id: 'dystopia', name: 'Dystopian Future', icon: '💀', desc: 'Destroys 500,000 tons per second', baseCost: 50000000, owned: 0, type: 'auto', power: 500000 }
+            { id: 'cattle', name: 'Cattle Ranch', icon: '🐄', desc: 'Produces 5 tons per second', baseCost: 150, owned: 0, type: 'auto', power: 5 },
+            { id: 'plane', name: 'Airplane Fleet', icon: '✈️', desc: 'Emits 15 tons per second', baseCost: 400, owned: 0, type: 'auto', power: 15 },
+            { id: 'plastic', name: 'Plastic Factory', icon: '🧴', desc: 'Dumps 40 tons per second', baseCost: 1000, owned: 0, type: 'auto', power: 40 },
+            { id: 'tanker', name: 'Oil Tanker', icon: '🛢️', desc: 'Spills 100 tons per second', baseCost: 3000, owned: 0, type: 'auto', power: 100 },
+            { id: 'fracking', name: 'Fracking Operation', icon: '⛏️', desc: 'Leaks 250 tons per second', baseCost: 8000, owned: 0, type: 'auto', power: 250 },
+            { id: 'powerplant', name: 'Coal Power Plant', icon: '⚡', desc: 'Burns 600 tons per second', baseCost: 20000, owned: 0, type: 'auto', power: 600 },
+            { id: 'deforest', name: 'Deforestation Co. HQ', icon: '🪓', desc: 'Destroys 1,500 tons per second', baseCost: 50000, owned: 0, type: 'auto', power: 1500 },
+            { id: 'propaganda', name: 'Propaganda Network', icon: '📺', desc: 'Enables 4,000 tons per second', baseCost: 150000, owned: 0, type: 'auto', power: 4000 },
+            { id: 'oilrig', name: 'Offshore Oil Rig', icon: '🛢️', desc: 'Pumps 10,000 tons per second', baseCost: 400000, owned: 0, type: 'auto', power: 10000 },
+            { id: 'megacorp', name: 'Mega Corporation', icon: '🏢', desc: 'Pollutes 25,000 tons per second', baseCost: 1000000, owned: 0, type: 'auto', power: 25000 },
+            { id: 'lobby', name: 'Lobbying Firm', icon: '💼', desc: 'Blocks 60,000 tons per second', baseCost: 3000000, owned: 0, type: 'auto', power: 60000 },
+            { id: 'government', name: 'Corrupt Government', icon: '🏛️', desc: 'Ignores 150,000 tons per second', baseCost: 8000000, owned: 0, type: 'auto', power: 150000 },
+            { id: 'weather', name: 'Weather Machine', icon: '🌪️', desc: 'Weaponizes 400,000 tons per second', baseCost: 25000000, owned: 0, type: 'auto', power: 400000 },
+            { id: 'mindcontrol', name: 'Mind Control Array', icon: '🧠', desc: 'Converts 1M tons per second', baseCost: 80000000, owned: 0, type: 'auto', power: 1000000 },
+            { id: 'dystopia', name: 'Dystopian Future', icon: '💀', desc: 'Destroys 3M tons per second', baseCost: 250000000, owned: 0, type: 'auto', power: 3000000 },
+            { id: 'singularity', name: 'Pollution Singularity', icon: '🌑', desc: 'Infinite: 10M tons per second', baseCost: 1000000000, owned: 0, type: 'auto', power: 10000000 }
         ];
 
         // DOM Elements
@@ -677,6 +690,7 @@
         const currentPlanetNameDisplay = document.getElementById('current-planet-name');
         const multiplierDisplay = document.getElementById('multiplier-display');
         const planetsDestroyedDisplay = document.getElementById('planets-destroyed');
+        const newsText = document.getElementById('news-text');
 
         function getCurrentPlanet() {
             return planets[currentPlanetIndex];
@@ -883,12 +897,17 @@
         function buyUpgrade(upgrade) {
             const cost = getCost(upgrade);
             if (pollution >= cost) {
+                const wasFirstPurchase = upgrade.owned === 0;
                 pollution -= cost;
                 upgrade.owned++;
                 if (upgrade.type === 'click') {
                     pollutionPerClick += upgrade.power;
                 } else if (upgrade.type === 'auto') {
                     pollutionPerSecond += upgrade.power;
+                }
+                // Show news on first purchase
+                if (wasFirstPurchase && storyMessages.upgrades[upgrade.id]) {
+                    newsText.innerHTML = storyMessages.upgrades[upgrade.id];
                 }
                 renderUpgrades();
                 updateDisplay();
@@ -981,7 +1000,6 @@
         setInterval(saveGame, 30000);
 
         // Story System
-        const newsText = document.getElementById('news-text');
         let lastStoryIndex = -1;
         let storyPhase = 0;
 
@@ -1071,7 +1089,41 @@
                 "Ocean cleanup cancelled. 'The plastic stays,' announces CEO.",
                 "Recycling outlawed. '<span>Deforestation Co.</span> needs job security.'",
                 "Nature documentary becomes horror film. No CGI needed.",
-            ]
+            ],
+            // Upgrade-specific stories (triggered on first purchase)
+            upgrades: {
+                car: "Your first polluting vehicle! <span>Deforestation Co.</span> sends a welcome basket.",
+                suv: "SUV acquired. 8 miles per gallon. <span>Deforestation Co.</span> approves.",
+                truck: "Diesel truck rolling coal down Main Street. Pedestrians coughing.",
+                jet: "BREAKING: Local person buys private jet. Carbon footprint now visible from space.",
+                nuke: "Nuclear plant online. 'Totally safe,' says guy in hazmat suit.",
+                cruise: "Cruise ship launched! Each passenger produces 3x more CO2 than at home.",
+                rocket: "Rocket program initiated. The sky is no longer the limit for pollution.",
+                chemical: "ALERT: Chemical spill reported. <span>Deforestation Co.</span>: 'It's a feature.'",
+                volcano: "Scientists baffled as someone drills into active volcano 'for fun.'",
+                nuke_test: "FLASH: Nuclear test conducted. Birds now glow. 'Convenient,' says hunter.",
+                asteroid: "Space mining begins! <span>Deforestation Co.</span> expands beyond Earth.",
+                antimatter: "Antimatter engine created. Physics textbooks being rewritten with more pollution.",
+                blackhole: "BLACK HOLE GENERATOR ONLINE. Scientists: 'This seems bad.' <span>Deforestation Co.</span>: 'Seems profitable.'",
+                reality: "REALITY ITSELF NOW POLLUTED. <span>Deforestation Co.</span> transcends physical law.",
+                factory: "First factory built! The Industrial Revolution 2.0 begins.",
+                cattle: "Cattle ranch established. Methane production: maximum. Cows: confused.",
+                plane: "Airplane fleet takes off! Chemtrails now actual chemicals.",
+                plastic: "Plastic factory opens. Ocean wildlife sends formal complaint. Complaint ignored.",
+                tanker: "Oil tanker fleet deployed. Seagulls now permanently greased.",
+                fracking: "FRACKING BEGINS. Tap water now flammable. <span>Deforestation Co.</span>: 'Free heating!'",
+                powerplant: "Coal power plant operational. Local mountains now 'mountain-shaped holes.'",
+                deforest: "<span>DEFORESTATION CO. HEADQUARTERS ESTABLISHED!</span> The real game begins now.",
+                propaganda: "Propaganda network launched! 'Pollution is good for you' now trending.",
+                oilrig: "Offshore oil rig constructed. Fish formally request relocation assistance.",
+                megacorp: "<span>Deforestation Co.</span> achieves Mega Corporation status. Resistance is futile.",
+                lobby: "Lobbying firm hired. Environmental laws now 'suggestions.'",
+                government: "GOVERNMENT ACQUIRED. <span>Deforestation Co.</span> CEO now makes the laws.",
+                weather: "Weather machine activated! Sunny days are now 'legacy features.'",
+                mindcontrol: "MIND CONTROL ARRAY ONLINE. Everyone loves pollution now. Compliance is happiness.",
+                dystopia: "DYSTOPIAN FUTURE ACHIEVED. <span>Deforestation Co.</span>'s vision is complete.",
+                singularity: "POLLUTION SINGULARITY REACHED. All matter is now pollution. Pollution is all."
+            }
         };
 
         function getStoryPhase() {
