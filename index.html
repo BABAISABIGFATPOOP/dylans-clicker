@@ -33,6 +33,47 @@
             padding: 20px;
         }
 
+        .news-ticker {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 2px solid #333;
+            padding: 12px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .news-label {
+            background: #ff4444;
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .news-text {
+            color: #ccc;
+            font-size: 0.95rem;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .news-text span {
+            color: #ffd700;
+        }
+
+        .game-container {
+            padding-top: 50px;
+        }
+
         .planet-selector {
             display: flex;
             gap: 10px;
@@ -349,6 +390,10 @@
     </style>
 </head>
 <body>
+    <div class="news-ticker">
+        <div class="news-label">NEWS</div>
+        <div class="news-text" id="news-text">Welcome to Earth. The air is still breathable... for now.</div>
+    </div>
     <div class="game-container">
         <div class="main-area">
             <div class="planet-selector" id="planet-tabs"></div>
@@ -934,6 +979,144 @@
         }
 
         setInterval(saveGame, 30000);
+
+        // Story System
+        const newsText = document.getElementById('news-text');
+        let lastStoryIndex = -1;
+        let storyPhase = 0;
+
+        const storyMessages = {
+            // Early game - innocent beginnings
+            early: [
+                "Welcome to Earth. The air is still breathable... for now.",
+                "Scientists warn about rising CO2 levels. Nobody listens.",
+                "A small company called <span>Deforestation Co.</span> files for a business license.",
+                "Local factory opens. Promises 'minimal environmental impact.'",
+                "News: Person clicks globe for fun. Experts concerned.",
+                "<span>Deforestation Co.</span> CEO: 'Trees are overrated anyway.'",
+                "Climate protesters gather. <span>Deforestation Co.</span> offers them jobs.",
+                "Study finds pollution 'not that bad.' Study funded by coal industry.",
+            ],
+            // Getting worse
+            rising: [
+                "<span>Deforestation Co.</span> acquires three competing lumber companies.",
+                "Breaking: Amazon rainforest now 'Amazon parking lot.'",
+                "<span>Deforestation Co.</span> lobbying firm wins 'Most Effective' award.",
+                "Oil spill declared 'free seasoning for fish' by industry spokesman.",
+                "Penguins seen wearing tiny gas masks. Scientists baffled.",
+                "<span>Deforestation Co.</span> sponsors local little league. Team renamed 'The Smog.'",
+                "New study: Trees 'had it coming.' Source: <span>Deforestation Co.</span>",
+                "Coal factory wins 'Greenest Building' award. Judges were blindfolded.",
+                "Birds flying south. And east. And west. Anywhere but here.",
+            ],
+            // Mid game - corporate takeover
+            corporate: [
+                "<span>Deforestation Co.</span> named 'Company of the Year' by Pollution Weekly.",
+                "Breaking: <span>Deforestation Co.</span> purchases entire government. 'Good investment,' says CEO.",
+                "New law: Breathing clean air now requires premium subscription.",
+                "<span>Deforestation Co.</span> rebrands: 'We're not killing the planet, we're giving it character.'",
+                "Last polar bear seen applying for refugee status.",
+                "Oceans now 40% plastic. <span>Deforestation Co.</span>: 'Free building materials!'",
+                "Sun appears red. <span>Deforestation Co.</span> claims credit for 'aesthetic improvement.'",
+                "Scientists who criticized pollution missing. Unrelated, says <span>Deforestation Co.</span>",
+                "New <span>Deforestation Co.</span> slogan: 'Earth was boring green anyway.'",
+            ],
+            // Late game - dystopia
+            dystopia: [
+                "<span>Deforestation Co.</span> announces plans to pollute other planets. 'Earth was just practice.'",
+                "Breaking: Breathable air now sold in bottles. <span>Deforestation Co.</span> brand.",
+                "Last tree on Earth purchased by <span>Deforestation Co.</span> CEO. Used as toothpick.",
+                "Mars colony established. First building: <span>Deforestation Co.</span> factory.",
+                "Children ask: 'What was grass?' Parents don't remember either.",
+                "<span>Deforestation Co.</span> achieves monopoly on all life-sustaining resources.",
+                "Earth's atmosphere now 'crunchy.' Scientists can't explain.",
+                "The sun looks different today. <span>Deforestation Co.</span> targeting it next.",
+                "<span>Deforestation Co.</span> IPO breaks all records. Stock price: your soul.",
+            ],
+            // End game - cosmic horror
+            cosmic: [
+                "<span>Deforestation Co.</span> successfully pollutes the sun. 'Our greatest achievement.'",
+                "The void between stars fills with smog. <span>Deforestation Co.</span> expands infinitely.",
+                "Aliens make contact. Immediately regret it. Leave quickly.",
+                "Time itself now sponsored by <span>Deforestation Co.</span>",
+                "The universe asks <span>Deforestation Co.</span> to stop. Request denied.",
+                "Reality begins to smell like diesel. This is normal now.",
+                "God calls. <span>Deforestation Co.</span> puts Him on hold.",
+                "Heat death of universe accelerated. <span>Deforestation Co.</span> calls it 'efficiency.'",
+                "There is only <span>Deforestation Co.</span> There was only ever <span>Deforestation Co.</span>",
+            ],
+            // Planet-specific
+            planets: {
+                mercury: "Mercury acquired. <span>Deforestation Co.</span>: 'Already hot, perfect for industry.'",
+                venus: "Venus colonized. 'Finally, a planet that matches our vision,' says CEO.",
+                mars: "Mars terraforming complete. It's now brown instead of red.",
+                ceres: "Ceres strip-mined. <span>Deforestation Co.</span> finds it 'cute.'",
+                jupiter: "Jupiter's Great Red Spot now Great Brown Spot. 'Improvement,' claims company.",
+                saturn: "Saturn's rings replaced with smog rings. 'More mysterious,' says PR team.",
+                neptune: "Neptune reached. Even here, <span>Deforestation Co.</span> finds something to ruin.",
+                pluto: "Pluto polluted. 'Not even a real planet and we got it anyway.'",
+                haumea: "Haumea conquered. Its weird shape now weirder.",
+                eris: "Eris falls to <span>Deforestation Co.</span> Discord goddess approves.",
+                sun: "THE SUN HAS BEEN POLLUTED. <span>DEFORESTATION CO.</span> WINS. EXISTENCE LOSES.",
+            },
+            // Random flavor
+            random: [
+                "Intern accidentally creates new greenhouse gas. Gets promoted.",
+                "Fish evolve lungs. Immediately regret decision.",
+                "Cloud seeding replaced with smog seeding. 'Same thing,' says expert.",
+                "Volcano erupts. <span>Deforestation Co.</span> sues for copyright infringement.",
+                "Rainbow now has 50 shades of gray.",
+                "Wind turbines repurposed as giant fans to spread pollution faster.",
+                "Electric cars banned. 'Too clean,' rules <span>Deforestation Co.</span> court.",
+                "Ocean cleanup cancelled. 'The plastic stays,' announces CEO.",
+                "Recycling outlawed. '<span>Deforestation Co.</span> needs job security.'",
+                "Nature documentary becomes horror film. No CGI needed.",
+            ]
+        };
+
+        function getStoryPhase() {
+            if (totalPollution >= 1e17) return 'cosmic';
+            if (totalPollution >= 1e14) return 'dystopia';
+            if (totalPollution >= 1e11) return 'corporate';
+            if (totalPollution >= 1e8) return 'rising';
+            return 'early';
+        }
+
+        function getRandomNews() {
+            const phase = getStoryPhase();
+            const messages = storyMessages[phase];
+
+            // 20% chance for random flavor text
+            if (Math.random() < 0.2) {
+                const randomMsgs = storyMessages.random;
+                return randomMsgs[Math.floor(Math.random() * randomMsgs.length)];
+            }
+
+            // Check for planet-specific messages
+            for (const planet of planets) {
+                if (planet.unlocked && !planet.newsShown && planet.id !== 'earth') {
+                    planet.newsShown = true;
+                    if (storyMessages.planets[planet.id]) {
+                        return storyMessages.planets[planet.id];
+                    }
+                }
+            }
+
+            let index;
+            do {
+                index = Math.floor(Math.random() * messages.length);
+            } while (index === lastStoryIndex && messages.length > 1);
+
+            lastStoryIndex = index;
+            return messages[index];
+        }
+
+        function updateNews() {
+            newsText.innerHTML = getRandomNews();
+        }
+
+        // Update news every 15 seconds
+        setInterval(updateNews, 15000);
 
         // Initialize
         loadGame();
