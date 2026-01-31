@@ -959,8 +959,19 @@
     </div>
 
     <script>
-        // Planets
-        const planets = [
+        // Helper function to create planet color gradients
+        function createPlanetColors(baseColor, midColor, dirtyColor, deadColor) {
+            return {
+                clean: `radial-gradient(circle at 30% 30%, ${baseColor[0]}, ${baseColor[1]} 40%, ${baseColor[2]} 70%, ${baseColor[3]})`,
+                mid: `radial-gradient(circle at 30% 30%, ${midColor[0]}, ${midColor[1]} 40%, ${midColor[2]} 70%, ${midColor[3]})`,
+                dirty: `radial-gradient(circle at 30% 30%, ${dirtyColor[0]}, ${dirtyColor[1]} 40%, ${dirtyColor[2]} 70%, ${dirtyColor[3]})`,
+                dead: `radial-gradient(circle at 30% 30%, ${deadColor[0]}, ${deadColor[1]} 40%, ${deadColor[2]} 70%, ${deadColor[3]})`
+            };
+        }
+
+        // Planets organized by solar system
+        const systemPlanets = {
+            sol: [
             {
                 id: 'earth',
                 name: 'Earth',
@@ -1153,7 +1164,111 @@
                     dead: 'radial-gradient(circle at 30% 30%, #aa4400, #882200 40%, #661100 70%, #440800)'
                 }
             }
-        ];
+            ],
+            alpha_centauri: [
+                { id: 'ac_prime', name: 'Centauri Prime', icon: '🌟', unlocked: true, cost: 0, multiplier: 1, maxPollution: 5e12, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #f0e68c, #daa520 40%, #b8860b 70%, #8b4513)', mid: 'radial-gradient(circle at 30% 30%, #daa520, #cd853f 40%, #a0522d 70%, #8b4513)', dirty: 'radial-gradient(circle at 30% 30%, #cd853f, #8b4513 40%, #654321 70%, #3d2314)', dead: 'radial-gradient(circle at 30% 30%, #654321, #3d2314 40%, #2d1810 70%, #1a0f0a)' }},
+                { id: 'ac_b', name: 'Proxima B', icon: '🔵', unlocked: false, cost: 1e16, multiplier: 3, maxPollution: 2e13, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #4169e1, #1e90ff 40%, #0000cd 70%, #00008b)', mid: 'radial-gradient(circle at 30% 30%, #1e90ff, #0000cd 40%, #00008b 70%, #000080)', dirty: 'radial-gradient(circle at 30% 30%, #0000cd, #00008b 40%, #000080 70%, #00004d)', dead: 'radial-gradient(circle at 30% 30%, #2a2a4a, #1a1a3a 40%, #0a0a2a 70%, #05051a)' }},
+                { id: 'ac_c', name: 'Centauri C', icon: '🟤', unlocked: false, cost: 1e17, multiplier: 8, maxPollution: 8e13, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #8b4513, #a0522d 40%, #654321 70%, #3d2314)', mid: 'radial-gradient(circle at 30% 30%, #a0522d, #654321 40%, #3d2314 70%, #2d1810)', dirty: 'radial-gradient(circle at 30% 30%, #654321, #3d2314 40%, #2d1810 70%, #1a0f0a)', dead: 'radial-gradient(circle at 30% 30%, #2d1810, #1a0f0a 40%, #100a05 70%, #050302)' }},
+                { id: 'ac_star', name: 'Alpha Star', icon: '⭐', unlocked: false, cost: 1e18, multiplier: 25, maxPollution: 5e14, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #fffacd, #ffd700 40%, #ffa500 70%, #ff8c00)', mid: 'radial-gradient(circle at 30% 30%, #ffd700, #ffa500 40%, #ff8c00 70%, #ff6600)', dirty: 'radial-gradient(circle at 30% 30%, #ffa500, #ff6600 40%, #cc5200 70%, #993d00)', dead: 'radial-gradient(circle at 30% 30%, #993d00, #662900 40%, #331400 70%, #1a0a00)' }}
+            ],
+            trappist: [
+                { id: 'tr_1b', name: 'TRAPPIST-1b', icon: '🌑', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e13, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #4a4a4a, #3a3a3a 40%, #2a2a2a 70%, #1a1a1a)', mid: 'radial-gradient(circle at 30% 30%, #3a3a3a, #2a2a2a 40%, #1a1a1a 70%, #0a0a0a)', dirty: 'radial-gradient(circle at 30% 30%, #2a2a2a, #1a1a1a 40%, #0a0a0a 70%, #050505)', dead: 'radial-gradient(circle at 30% 30%, #1a1a1a, #0a0a0a 40%, #050505 70%, #020202)' }},
+                { id: 'tr_1c', name: 'TRAPPIST-1c', icon: '🟠', unlocked: false, cost: 5e17, multiplier: 3, maxPollution: 5e13, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #ff8c00, #ff6600 40%, #cc5200 70%, #993d00)', mid: 'radial-gradient(circle at 30% 30%, #ff6600, #cc5200 40%, #993d00 70%, #662900)', dirty: 'radial-gradient(circle at 30% 30%, #cc5200, #993d00 40%, #662900 70%, #331400)', dead: 'radial-gradient(circle at 30% 30%, #662900, #331400 40%, #1a0a00 70%, #0d0500)' }},
+                { id: 'tr_1d', name: 'TRAPPIST-1d', icon: '🔵', unlocked: false, cost: 2e18, multiplier: 8, maxPollution: 2e14, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #00bfff, #1e90ff 40%, #4169e1 70%, #0000cd)', mid: 'radial-gradient(circle at 30% 30%, #1e90ff, #4169e1 40%, #0000cd 70%, #00008b)', dirty: 'radial-gradient(circle at 30% 30%, #4169e1, #0000cd 40%, #00008b 70%, #000080)', dead: 'radial-gradient(circle at 30% 30%, #1a1a4a, #0a0a3a 40%, #05052a 70%, #02021a)' }},
+                { id: 'tr_1e', name: 'TRAPPIST-1e', icon: '🌍', unlocked: false, cost: 1e19, multiplier: 20, maxPollution: 1e15, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #228b22, #2e8b57 40%, #006400 70%, #004d00)', mid: 'radial-gradient(circle at 30% 30%, #2e8b57, #006400 40%, #004d00 70%, #003300)', dirty: 'radial-gradient(circle at 30% 30%, #556b2f, #4a5a2a 40%, #3d4a22 70%, #2a3318)', dead: 'radial-gradient(circle at 30% 30%, #3d3d2a, #2a2a1a 40%, #1a1a10 70%, #0a0a05)' }},
+                { id: 'tr_1f', name: 'TRAPPIST-1f', icon: '❄️', unlocked: false, cost: 5e19, multiplier: 50, maxPollution: 5e15, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #e0ffff, #b0e0e6 40%, #87ceeb 70%, #4682b4)', mid: 'radial-gradient(circle at 30% 30%, #b0e0e6, #87ceeb 40%, #4682b4 70%, #4169e1)', dirty: 'radial-gradient(circle at 30% 30%, #87ceeb, #4682b4 40%, #4169e1 70%, #0000cd)', dead: 'radial-gradient(circle at 30% 30%, #4a4a6a, #3a3a5a 40%, #2a2a4a 70%, #1a1a3a)' }},
+                { id: 'tr_star', name: 'TRAPPIST Star', icon: '🔴', unlocked: false, cost: 5e20, multiplier: 150, maxPollution: 5e16, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #ff4500, #dc143c 40%, #b22222 70%, #8b0000)', mid: 'radial-gradient(circle at 30% 30%, #dc143c, #b22222 40%, #8b0000 70%, #660000)', dirty: 'radial-gradient(circle at 30% 30%, #b22222, #8b0000 40%, #660000 70%, #330000)', dead: 'radial-gradient(circle at 30% 30%, #4a1a1a, #3a0a0a 40%, #2a0505 70%, #1a0202)' }}
+            ],
+            kepler442: [
+                { id: 'k442_b', name: 'Kepler-442b', icon: '🌎', unlocked: true, cost: 0, multiplier: 1, maxPollution: 5e14, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #3cb371, #2e8b57 40%, #228b22 70%, #006400)', mid: 'radial-gradient(circle at 30% 30%, #2e8b57, #228b22 40%, #006400 70%, #004d00)', dirty: 'radial-gradient(circle at 30% 30%, #556b2f, #4a5a2a 40%, #3d4a22 70%, #2a3318)', dead: 'radial-gradient(circle at 30% 30%, #3d3d2a, #2a2a1a 40%, #1a1a10 70%, #0a0a05)' }},
+                { id: 'k442_moon', name: 'Kepler Moon', icon: '🌙', unlocked: false, cost: 1e20, multiplier: 5, maxPollution: 2e15, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #c0c0c0, #a9a9a9 40%, #808080 70%, #696969)', mid: 'radial-gradient(circle at 30% 30%, #a9a9a9, #808080 40%, #696969 70%, #4a4a4a)', dirty: 'radial-gradient(circle at 30% 30%, #808080, #696969 40%, #4a4a4a 70%, #2a2a2a)', dead: 'radial-gradient(circle at 30% 30%, #4a4a4a, #2a2a2a 40%, #1a1a1a 70%, #0a0a0a)' }},
+                { id: 'k442_giant', name: 'Gas Giant X', icon: '🟣', unlocked: false, cost: 1e21, multiplier: 20, maxPollution: 1e16, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #9370db, #8a2be2 40%, #7b68ee 70%, #6a5acd)', mid: 'radial-gradient(circle at 30% 30%, #8a2be2, #7b68ee 40%, #6a5acd 70%, #483d8b)', dirty: 'radial-gradient(circle at 30% 30%, #7b68ee, #6a5acd 40%, #483d8b 70%, #2e1f5e)', dead: 'radial-gradient(circle at 30% 30%, #2e1f5e, #1f1040 40%, #100820 70%, #080410)' }},
+                { id: 'k442_star', name: 'Kepler Star', icon: '🟠', unlocked: false, cost: 1e22, multiplier: 75, maxPollution: 1e17, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #ffa500, #ff8c00 40%, #ff6600 70%, #cc5200)', mid: 'radial-gradient(circle at 30% 30%, #ff8c00, #ff6600 40%, #cc5200 70%, #993d00)', dirty: 'radial-gradient(circle at 30% 30%, #ff6600, #cc5200 40%, #993d00 70%, #662900)', dead: 'radial-gradient(circle at 30% 30%, #662900, #4d1f00 40%, #331400 70%, #1a0a00)' }}
+            ],
+            gliese: [
+                { id: 'gl_a', name: 'Gliese A', icon: '🌕', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e15, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #f5f5dc, #eed9b6 40%, #deb887 70%, #d2a679)', mid: 'radial-gradient(circle at 30% 30%, #eed9b6, #deb887 40%, #d2a679 70%, #c19660)', dirty: 'radial-gradient(circle at 30% 30%, #deb887, #c19660 40%, #a68040 70%, #8b6914)', dead: 'radial-gradient(circle at 30% 30%, #6b5a3a, #5a4a2a 40%, #4a3a1a 70%, #3a2a0a)' }},
+                { id: 'gl_b', name: 'Gliese B', icon: '🔴', unlocked: false, cost: 5e21, multiplier: 5, maxPollution: 5e15, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #cd5c5c, #dc143c 40%, #b22222 70%, #8b0000)', mid: 'radial-gradient(circle at 30% 30%, #dc143c, #b22222 40%, #8b0000 70%, #660000)', dirty: 'radial-gradient(circle at 30% 30%, #b22222, #8b0000 40%, #660000 70%, #4d0000)', dead: 'radial-gradient(circle at 30% 30%, #4d0000, #330000 40%, #1a0000 70%, #0d0000)' }},
+                { id: 'gl_c', name: 'Gliese C', icon: '🟢', unlocked: false, cost: 5e22, multiplier: 20, maxPollution: 2e16, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #00ff00, #32cd32 40%, #228b22 70%, #006400)', mid: 'radial-gradient(circle at 30% 30%, #32cd32, #228b22 40%, #006400 70%, #004d00)', dirty: 'radial-gradient(circle at 30% 30%, #228b22, #006400 40%, #004d00 70%, #003300)', dead: 'radial-gradient(circle at 30% 30%, #2a3d2a, #1a2a1a 40%, #0a1a0a 70%, #050d05)' }},
+                { id: 'gl_triple', name: 'Triple Star Core', icon: '🔶', unlocked: false, cost: 5e23, multiplier: 100, maxPollution: 2e17, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #ff7f50, #ff6347 40%, #ff4500 70%, #dc143c)', mid: 'radial-gradient(circle at 30% 30%, #ff6347, #ff4500 40%, #dc143c 70%, #b22222)', dirty: 'radial-gradient(circle at 30% 30%, #ff4500, #dc143c 40%, #b22222 70%, #8b0000)', dead: 'radial-gradient(circle at 30% 30%, #5a2a2a, #4a1a1a 40%, #3a0a0a 70%, #2a0505)' }}
+            ],
+            kepler22: [
+                { id: 'k22_b', name: 'Kepler-22b', icon: '🌊', unlocked: true, cost: 0, multiplier: 1, maxPollution: 5e15, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #00ced1, #20b2aa 40%, #008b8b 70%, #006666)', mid: 'radial-gradient(circle at 30% 30%, #20b2aa, #008b8b 40%, #006666 70%, #004d4d)', dirty: 'radial-gradient(circle at 30% 30%, #008b8b, #006666 40%, #004d4d 70%, #003333)', dead: 'radial-gradient(circle at 30% 30%, #2a4a4a, #1a3a3a 40%, #0a2a2a 70%, #051a1a)' }},
+                { id: 'k22_atoll', name: 'Ocean Atoll', icon: '🏝️', unlocked: false, cost: 1e24, multiplier: 5, maxPollution: 2e16, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #40e0d0, #48d1cc 40%, #00ced1 70%, #20b2aa)', mid: 'radial-gradient(circle at 30% 30%, #48d1cc, #00ced1 40%, #20b2aa 70%, #008b8b)', dirty: 'radial-gradient(circle at 30% 30%, #00ced1, #20b2aa 40%, #008b8b 70%, #006666)', dead: 'radial-gradient(circle at 30% 30%, #2a4a4a, #1a3a3a 40%, #0a2a2a 70%, #051a1a)' }},
+                { id: 'k22_deep', name: 'The Deep', icon: '🦑', unlocked: false, cost: 1e25, multiplier: 25, maxPollution: 1e17, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #191970, #000080 40%, #00008b 70%, #0000cd)', mid: 'radial-gradient(circle at 30% 30%, #000080, #00008b 40%, #0000cd 70%, #0000ff)', dirty: 'radial-gradient(circle at 30% 30%, #0a0a4a, #05053a 40%, #02022a 70%, #01011a)', dead: 'radial-gradient(circle at 30% 30%, #0a0a2a, #05051a 40%, #02020a 70%, #010105)' }},
+                { id: 'k22_star', name: 'Kepler-22', icon: '💧', unlocked: false, cost: 1e26, multiplier: 100, maxPollution: 1e18, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #87ceeb, #00bfff 40%, #1e90ff 70%, #4169e1)', mid: 'radial-gradient(circle at 30% 30%, #00bfff, #1e90ff 40%, #4169e1 70%, #0000cd)', dirty: 'radial-gradient(circle at 30% 30%, #1e90ff, #4169e1 40%, #0000cd 70%, #00008b)', dead: 'radial-gradient(circle at 30% 30%, #2a2a5a, #1a1a4a 40%, #0a0a3a 70%, #05052a)' }}
+            ],
+            proxima: [
+                { id: 'px_b', name: 'Proxima b', icon: '❤️', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e16, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #ff6b6b, #ee5a5a 40%, #dc143c 70%, #b22222)', mid: 'radial-gradient(circle at 30% 30%, #ee5a5a, #dc143c 40%, #b22222 70%, #8b0000)', dirty: 'radial-gradient(circle at 30% 30%, #dc143c, #b22222 40%, #8b0000 70%, #660000)', dead: 'radial-gradient(circle at 30% 30%, #4a1a1a, #3a0a0a 40%, #2a0505 70%, #1a0202)' }},
+                { id: 'px_c', name: 'Proxima c', icon: '💜', unlocked: false, cost: 5e25, multiplier: 8, maxPollution: 5e16, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #da70d6, #ba55d3 40%, #9932cc 70%, #8b008b)', mid: 'radial-gradient(circle at 30% 30%, #ba55d3, #9932cc 40%, #8b008b 70%, #800080)', dirty: 'radial-gradient(circle at 30% 30%, #9932cc, #8b008b 40%, #800080 70%, #4b0082)', dead: 'radial-gradient(circle at 30% 30%, #2a1a3a, #1a0a2a 40%, #0a051a 70%, #05020d)' }},
+                { id: 'px_star', name: 'Proxima Star', icon: '🔴', unlocked: false, cost: 5e26, multiplier: 50, maxPollution: 5e17, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #ff0000, #dc143c 40%, #b22222 70%, #8b0000)', mid: 'radial-gradient(circle at 30% 30%, #dc143c, #b22222 40%, #8b0000 70%, #660000)', dirty: 'radial-gradient(circle at 30% 30%, #b22222, #8b0000 40%, #660000 70%, #4d0000)', dead: 'radial-gradient(circle at 30% 30%, #3a0a0a, #2a0505 40%, #1a0202 70%, #0d0101)' }}
+            ],
+            tau_ceti: [
+                { id: 'tc_e', name: 'Tau Ceti e', icon: '🌏', unlocked: true, cost: 0, multiplier: 1, maxPollution: 5e16, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #4a90d9, #1e5799 40%, #0d3a6e 70%, #082040)', mid: 'radial-gradient(circle at 30% 30%, #5a9aca, #2a6a99 40%, #1a4a70 70%, #0a2a40)', dirty: 'radial-gradient(circle at 30% 30%, #6a8b9a, #3d5c6e 40%, #2a4050 70%, #152030)', dead: 'radial-gradient(circle at 30% 30%, #8b7355, #5c4a3a 40%, #3d3028 70%, #1a1510)' }},
+                { id: 'tc_f', name: 'Tau Ceti f', icon: '🟤', unlocked: false, cost: 1e27, multiplier: 10, maxPollution: 2e17, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #d2691e, #cd853f 40%, #a0522d 70%, #8b4513)', mid: 'radial-gradient(circle at 30% 30%, #cd853f, #a0522d 40%, #8b4513 70%, #654321)', dirty: 'radial-gradient(circle at 30% 30%, #a0522d, #8b4513 40%, #654321 70%, #3d2314)', dead: 'radial-gradient(circle at 30% 30%, #3d2314, #2d1810 40%, #1d0f0a 70%, #0d0805)' }},
+                { id: 'tc_star', name: 'Tau Ceti', icon: '💛', unlocked: false, cost: 1e28, multiplier: 75, maxPollution: 2e18, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #ffff00, #ffd700 40%, #ffc000 70%, #ffaa00)', mid: 'radial-gradient(circle at 30% 30%, #ffd700, #ffc000 40%, #ffaa00 70%, #ff9500)', dirty: 'radial-gradient(circle at 30% 30%, #ffc000, #ffaa00 40%, #ff9500 70%, #ff8000)', dead: 'radial-gradient(circle at 30% 30%, #996600, #804d00 40%, #663300 70%, #4d2600)' }}
+            ],
+            andromeda: [
+                { id: 'an_gateway', name: 'Gateway World', icon: '🌀', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e17, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #9400d3, #8b008b 40%, #800080 70%, #4b0082)', mid: 'radial-gradient(circle at 30% 30%, #8b008b, #800080 40%, #4b0082 70%, #2e0854)', dirty: 'radial-gradient(circle at 30% 30%, #800080, #4b0082 40%, #2e0854 70%, #1a0030)', dead: 'radial-gradient(circle at 30% 30%, #1a0030, #0d0018 40%, #05000a 70%, #020005)' }},
+                { id: 'an_prime', name: 'Andromeda Prime', icon: '👑', unlocked: false, cost: 1e30, multiplier: 20, maxPollution: 1e18, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #ffd700, #ffb700 40%, #ff9700 70%, #ff7700)', mid: 'radial-gradient(circle at 30% 30%, #ffb700, #ff9700 40%, #ff7700 70%, #ff5700)', dirty: 'radial-gradient(circle at 30% 30%, #ff9700, #ff7700 40%, #ff5700 70%, #ff3700)', dead: 'radial-gradient(circle at 30% 30%, #804000, #602000 40%, #401000 70%, #200800)' }},
+                { id: 'an_core', name: 'Galactic Core', icon: '💫', unlocked: false, cost: 1e32, multiplier: 150, maxPollution: 1e19, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #ffffff, #f0f0ff 40%, #e0e0ff 70%, #d0d0ff)', mid: 'radial-gradient(circle at 30% 30%, #f0f0ff, #e0e0ff 40%, #d0d0ff 70%, #c0c0ff)', dirty: 'radial-gradient(circle at 30% 30%, #e0e0ff, #c0c0e0 40%, #a0a0c0 70%, #8080a0)', dead: 'radial-gradient(circle at 30% 30%, #404060, #303050 40%, #202040 70%, #101030)' }}
+            ],
+            void: [
+                { id: 'vd_edge', name: 'Edge of Nothing', icon: '⚫', unlocked: true, cost: 0, multiplier: 1, maxPollution: 5e17, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #1a1a2e, #0f0f1f 40%, #050510 70%, #020205)', mid: 'radial-gradient(circle at 30% 30%, #0f0f1f, #050510 40%, #020205 70%, #010102)', dirty: 'radial-gradient(circle at 30% 30%, #050510, #020205 40%, #010102 70%, #000001)', dead: 'radial-gradient(circle at 30% 30%, #000001, #000000 40%, #000000 70%, #000000)' }},
+                { id: 'vd_tear', name: 'Reality Tear', icon: '🕳️', unlocked: false, cost: 1e35, multiplier: 50, maxPollution: 5e18, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #2a0a3a, #1a0528 40%, #0a0215 70%, #05010a)', mid: 'radial-gradient(circle at 30% 30%, #1a0528, #0a0215 40%, #05010a 70%, #020105)', dirty: 'radial-gradient(circle at 30% 30%, #0a0215, #05010a 40%, #020105 70%, #010002)', dead: 'radial-gradient(circle at 30% 30%, #020105, #010002 40%, #000001 70%, #000000)' }},
+                { id: 'vd_heart', name: 'Void Heart', icon: '🖤', unlocked: false, cost: 1e37, multiplier: 500, maxPollution: 5e19, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #0a0a15, #050508 40%, #020203 70%, #010101)', mid: 'radial-gradient(circle at 30% 30%, #050508, #020203 40%, #010101 70%, #000000)', dirty: 'radial-gradient(circle at 30% 30%, #020203, #010101 40%, #000000 70%, #000000)', dead: 'radial-gradient(circle at 30% 30%, #000000, #000000 40%, #000000 70%, #000000)' }}
+            ],
+            origin: [
+                { id: 'or_spark', name: 'First Spark', icon: '✨', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e18, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #ffffff, #ffffcc 40%, #ffff99 70%, #ffff66)', mid: 'radial-gradient(circle at 30% 30%, #ffffcc, #ffff99 40%, #ffff66 70%, #ffff33)', dirty: 'radial-gradient(circle at 30% 30%, #ffff99, #ffff66 40%, #ffff33 70%, #ffff00)', dead: 'radial-gradient(circle at 30% 30%, #666633, #4d4d26 40%, #33331a 70%, #1a1a0d)' }},
+                { id: 'or_matter', name: 'First Matter', icon: '🔮', unlocked: false, cost: 1e40, multiplier: 100, maxPollution: 1e19, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #ff00ff, #cc00cc 40%, #990099 70%, #660066)', mid: 'radial-gradient(circle at 30% 30%, #cc00cc, #990099 40%, #660066 70%, #4d004d)', dirty: 'radial-gradient(circle at 30% 30%, #990099, #660066 40%, #4d004d 70%, #330033)', dead: 'radial-gradient(circle at 30% 30%, #1a001a, #0d000d 40%, #050005 70%, #020002)' }},
+                { id: 'or_bang', name: 'The Big Bang', icon: '💥', unlocked: false, cost: 1e42, multiplier: 1000, maxPollution: 1e20, pollution: 0,
+                  colors: { clean: 'radial-gradient(circle at 30% 30%, #ffffff, #ffcccc 40%, #ff9999 70%, #ff6666)', mid: 'radial-gradient(circle at 30% 30%, #ffcccc, #ff9999 40%, #ff6666 70%, #ff3333)', dirty: 'radial-gradient(circle at 30% 30%, #ff9999, #ff6666 40%, #ff3333 70%, #ff0000)', dead: 'radial-gradient(circle at 30% 30%, #660000, #4d0000 40%, #330000 70%, #1a0000)' }}
+            ]
+        };
+
+        // For backwards compatibility - points to current system's planets
+        let planets = systemPlanets.sol;
+
+        // Track current planet index per system
+        let currentPlanetPerSystem = {
+            sol: 0, alpha_centauri: 0, trappist: 0, kepler442: 0, gliese: 0,
+            kepler22: 0, proxima: 0, tau_ceti: 0, andromeda: 0, void: 0, origin: 0
+        };
 
         // Solar Systems
         const solarSystems = [
@@ -1401,6 +1516,7 @@
 
         // Planet sound profiles - each planet has unique sound characteristics
         const planetSounds = {
+            // Sol system
             earth: { baseFreq: 300, type: 'sine', color: 'warm' },
             mercury: { baseFreq: 500, type: 'square', color: 'metallic' },
             venus: { baseFreq: 250, type: 'sawtooth', color: 'harsh' },
@@ -1412,8 +1528,60 @@
             pluto: { baseFreq: 600, type: 'square', color: 'cold' },
             haumea: { baseFreq: 450, type: 'triangle', color: 'egg' },
             eris: { baseFreq: 280, type: 'sawtooth', color: 'chaotic' },
-            sun: { baseFreq: 80, type: 'sawtooth', color: 'blazing' }
+            sun: { baseFreq: 80, type: 'sawtooth', color: 'blazing' },
+            // Alpha Centauri
+            ac_prime: { baseFreq: 350, type: 'sine', color: 'golden' },
+            ac_b: { baseFreq: 400, type: 'triangle', color: 'watery' },
+            ac_c: { baseFreq: 220, type: 'square', color: 'dusty' },
+            ac_star: { baseFreq: 100, type: 'sawtooth', color: 'blazing' },
+            // TRAPPIST-1
+            tr_1b: { baseFreq: 150, type: 'square', color: 'dark' },
+            tr_1c: { baseFreq: 200, type: 'sawtooth', color: 'warm' },
+            tr_1d: { baseFreq: 380, type: 'sine', color: 'watery' },
+            tr_1e: { baseFreq: 300, type: 'triangle', color: 'earthlike' },
+            tr_1f: { baseFreq: 500, type: 'sine', color: 'cold' },
+            tr_star: { baseFreq: 90, type: 'sawtooth', color: 'deep' },
+            // Kepler-442
+            k442_b: { baseFreq: 320, type: 'sine', color: 'lush' },
+            k442_moon: { baseFreq: 450, type: 'triangle', color: 'hollow' },
+            k442_giant: { baseFreq: 140, type: 'sawtooth', color: 'deep' },
+            k442_star: { baseFreq: 110, type: 'sawtooth', color: 'blazing' },
+            // Gliese
+            gl_a: { baseFreq: 280, type: 'sine', color: 'warm' },
+            gl_b: { baseFreq: 180, type: 'square', color: 'harsh' },
+            gl_c: { baseFreq: 400, type: 'triangle', color: 'alien' },
+            gl_triple: { baseFreq: 100, type: 'sawtooth', color: 'blazing' },
+            // Kepler-22
+            k22_b: { baseFreq: 340, type: 'sine', color: 'watery' },
+            k22_atoll: { baseFreq: 380, type: 'sine', color: 'watery' },
+            k22_deep: { baseFreq: 120, type: 'triangle', color: 'deep' },
+            k22_star: { baseFreq: 360, type: 'sine', color: 'watery' },
+            // Proxima
+            px_b: { baseFreq: 250, type: 'triangle', color: 'warm' },
+            px_c: { baseFreq: 320, type: 'sine', color: 'mysterious' },
+            px_star: { baseFreq: 80, type: 'sawtooth', color: 'deep' },
+            // Tau Ceti
+            tc_e: { baseFreq: 300, type: 'sine', color: 'warm' },
+            tc_f: { baseFreq: 220, type: 'triangle', color: 'dusty' },
+            tc_star: { baseFreq: 120, type: 'sawtooth', color: 'blazing' },
+            // Andromeda
+            an_gateway: { baseFreq: 200, type: 'sawtooth', color: 'mysterious' },
+            an_prime: { baseFreq: 350, type: 'sine', color: 'golden' },
+            an_core: { baseFreq: 80, type: 'sawtooth', color: 'blazing' },
+            // Void
+            vd_edge: { baseFreq: 60, type: 'sine', color: 'dark' },
+            vd_tear: { baseFreq: 40, type: 'sawtooth', color: 'void' },
+            vd_heart: { baseFreq: 30, type: 'square', color: 'void' },
+            // Origin
+            or_spark: { baseFreq: 600, type: 'sine', color: 'bright' },
+            or_matter: { baseFreq: 400, type: 'triangle', color: 'mysterious' },
+            or_bang: { baseFreq: 100, type: 'sawtooth', color: 'blazing' }
         };
+
+        // Fallback for unknown planets
+        function getPlanetSound(planetId) {
+            return planetSounds[planetId] || { baseFreq: 300, type: 'sine', color: 'warm' };
+        }
 
         // Solar system sound modifiers
         const systemSounds = {
@@ -1442,7 +1610,7 @@
             // Get current planet and system sound profiles
             const planet = planets[currentPlanetIndex];
             const system = solarSystems[currentSystemIndex];
-            const pSound = planetSounds[planet?.id] || planetSounds.earth;
+            const pSound = getPlanetSound(planet?.id);
             const sSound = systemSounds[system?.id] || systemSounds.sol;
 
             switch(type) {
@@ -1967,21 +2135,27 @@
             pollutionPerSecond = 0;
             totalClicks = 0;
             totalPollution = 0;
-            currentPlanetIndex = 0;
             currentSystemIndex = 0;
             planetsDestroyed = 0;
+
+            // Reset current planet per system
+            Object.keys(currentPlanetPerSystem).forEach(sysId => {
+                currentPlanetPerSystem[sysId] = 0;
+            });
 
             // Reset upgrades
             upgrades.forEach(u => {
                 u.owned = 0;
             });
 
-            // Reset planets
-            planets.forEach((p, i) => {
-                p.unlocked = i === 0;
-                p.pollution = 0;
-                p.destroyed = false;
-                p.newsShown = false;
+            // Reset all planets in all systems
+            Object.values(systemPlanets).forEach(planetArray => {
+                planetArray.forEach((p, i) => {
+                    p.unlocked = i === 0; // First planet in each system is unlocked
+                    p.pollution = 0;
+                    p.destroyed = false;
+                    p.newsShown = false;
+                });
             });
 
             // Reset solar systems
@@ -2066,11 +2240,20 @@
             currentSystemIndex = index;
             playSound('system');
             newsText.innerHTML = `⭐ Traveling to <span>${solarSystems[index].name}</span>... ${solarSystems[index].description}`;
+
+            // Update planet display for new system
             const planet = getCurrentPlanet();
             const system = solarSystems[index];
+            planetNameDisplay.textContent = planet.name;
+            currentPlanetNameDisplay.textContent = planet.name;
             const totalMult = planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * prestigeMultiplier;
             multiplierDisplay.textContent = `Multiplier: x${formatNumber(totalMult)}`;
+
+            // Refresh planet UI for new system
+            renderPlanetTabs();
+            renderPlanetShop();
             renderSystemButtons();
+            updatePlanetAppearance();
             updateDisplay();
             saveGame();
         }
@@ -2234,7 +2417,23 @@
         setInterval(updateToxicWaste, 1000);
 
         function getCurrentPlanet() {
-            return planets[currentPlanetIndex];
+            const system = solarSystems[currentSystemIndex];
+            const systemId = system ? system.id : 'sol';
+            const currentPlanets = systemPlanets[systemId] || systemPlanets.sol;
+            const planetIndex = currentPlanetPerSystem[systemId] || 0;
+            return currentPlanets[planetIndex];
+        }
+
+        function getCurrentSystemPlanets() {
+            const system = solarSystems[currentSystemIndex];
+            const systemId = system ? system.id : 'sol';
+            return systemPlanets[systemId] || systemPlanets.sol;
+        }
+
+        function getCurrentPlanetIndex() {
+            const system = solarSystems[currentSystemIndex];
+            const systemId = system ? system.id : 'sol';
+            return currentPlanetPerSystem[systemId] || 0;
         }
 
         function getCost(upgrade) {
@@ -2290,9 +2489,11 @@
 
         function renderPlanetTabs() {
             planetTabs.innerHTML = '';
-            planets.forEach((planet, index) => {
+            const currentPlanets = getCurrentSystemPlanets();
+            const currentIndex = getCurrentPlanetIndex();
+            currentPlanets.forEach((planet, index) => {
                 const tab = document.createElement('div');
-                tab.className = 'planet-tab' + (index === currentPlanetIndex ? ' active' : '') + (!planet.unlocked ? ' locked' : '');
+                tab.className = 'planet-tab' + (index === currentIndex ? ' active' : '') + (!planet.unlocked ? ' locked' : '');
                 tab.innerHTML = `<span class="planet-emoji">${planet.icon}</span>${planet.name}`;
                 if (planet.unlocked) {
                     tab.addEventListener('click', () => switchPlanet(index));
@@ -2302,8 +2503,11 @@
         }
 
         function switchPlanet(index) {
-            if (!planets[index].unlocked) return;
-            currentPlanetIndex = index;
+            const currentPlanets = getCurrentSystemPlanets();
+            if (!currentPlanets[index].unlocked) return;
+            const system = solarSystems[currentSystemIndex];
+            const systemId = system ? system.id : 'sol';
+            currentPlanetPerSystem[systemId] = index;
             playSound('planet');
             const planet = getCurrentPlanet();
             const system = getCurrentSystem();
@@ -2318,8 +2522,9 @@
 
         function renderPlanetShop() {
             planetShop.innerHTML = '';
-            planets.forEach((planet, index) => {
-                if (index === 0) return; // Skip Earth
+            const currentPlanets = getCurrentSystemPlanets();
+            currentPlanets.forEach((planet, index) => {
+                if (index === 0) return; // Skip first planet (always unlocked)
                 const canAfford = pollution >= planet.cost;
                 const div = document.createElement('div');
                 div.className = 'planet-item' + (!canAfford && !planet.unlocked ? ' disabled' : '') + (planet.unlocked ? ' owned' : '');
@@ -2339,17 +2544,20 @@
             const item = e.target.closest('.planet-item');
             if (item && !item.classList.contains('disabled') && !item.classList.contains('owned')) {
                 const index = parseInt(item.getAttribute('data-planet-index'));
-                if (!isNaN(index) && planets[index] && !planets[index].unlocked) {
+                const currentPlanets = getCurrentSystemPlanets();
+                if (!isNaN(index) && currentPlanets[index] && !currentPlanets[index].unlocked) {
                     buyPlanet(index);
                 }
             }
         });
 
         function buyPlanet(index) {
-            const planet = planets[index];
+            const currentPlanets = getCurrentSystemPlanets();
+            const planet = currentPlanets[index];
             if (pollution >= planet.cost && !planet.unlocked) {
                 pollution -= planet.cost;
                 planet.unlocked = true;
+                playSound('unlock');
                 renderPlanetTabs();
                 renderPlanetShop();
                 updateDisplay();
@@ -2404,11 +2612,12 @@
         }
 
         function updatePlanetShopStates() {
+            const currentPlanets = getCurrentSystemPlanets();
             const items = planetShop.querySelectorAll('.planet-item');
             items.forEach((item) => {
                 const index = parseInt(item.getAttribute('data-planet-index'));
-                if (!isNaN(index) && planets[index] && !planets[index].unlocked) {
-                    const canAfford = pollution >= planets[index].cost;
+                if (!isNaN(index) && currentPlanets[index] && !currentPlanets[index].unlocked) {
+                    const canAfford = pollution >= currentPlanets[index].cost;
                     item.classList.toggle('disabled', !canAfford);
                 }
             });
@@ -2540,10 +2749,16 @@
                 pollutionPerSecond,
                 totalClicks,
                 totalPollution,
-                currentPlanetIndex,
+                currentPlanetPerSystem,
                 planetsDestroyed,
                 upgrades: upgrades.map(u => ({ id: u.id, owned: u.owned })),
-                planets: planets.map(p => ({ id: p.id, unlocked: p.unlocked, pollution: p.pollution, destroyed: p.destroyed })),
+                // Save all planets from all systems
+                allSystemPlanets: Object.fromEntries(
+                    Object.entries(systemPlanets).map(([sysId, planets]) => [
+                        sysId,
+                        planets.map(p => ({ id: p.id, unlocked: p.unlocked, pollution: p.pollution, destroyed: p.destroyed }))
+                    ])
+                ),
                 // Toxic waste data
                 toxicWaste,
                 lastToxicTime,
@@ -2587,7 +2802,13 @@
                 pollutionPerSecond = data.pollutionPerSecond || 0;
                 totalClicks = data.totalClicks || 0;
                 totalPollution = data.totalPollution || 0;
-                currentPlanetIndex = data.currentPlanetIndex || 0;
+                // Load per-system planet indices
+                if (data.currentPlanetPerSystem) {
+                    Object.assign(currentPlanetPerSystem, data.currentPlanetPerSystem);
+                } else if (data.currentPlanetIndex !== undefined) {
+                    // Backwards compatibility: old saves only had Sol planets
+                    currentPlanetPerSystem.sol = data.currentPlanetIndex;
+                }
                 planetsDestroyed = data.planetsDestroyed || 0;
 
                 if (data.upgrades) {
@@ -2597,9 +2818,24 @@
                     });
                 }
 
-                if (data.planets) {
+                // Load all system planets (new format)
+                if (data.allSystemPlanets) {
+                    Object.entries(data.allSystemPlanets).forEach(([sysId, savedPlanets]) => {
+                        if (systemPlanets[sysId]) {
+                            savedPlanets.forEach(savedPlanet => {
+                                const planet = systemPlanets[sysId].find(p => p.id === savedPlanet.id);
+                                if (planet) {
+                                    planet.unlocked = savedPlanet.unlocked;
+                                    planet.pollution = savedPlanet.pollution || 0;
+                                    planet.destroyed = savedPlanet.destroyed || false;
+                                }
+                            });
+                        }
+                    });
+                } else if (data.planets) {
+                    // Backwards compatibility: old saves only had Sol planets
                     data.planets.forEach(savedPlanet => {
-                        const planet = planets.find(p => p.id === savedPlanet.id);
+                        const planet = systemPlanets.sol.find(p => p.id === savedPlanet.id);
                         if (planet) {
                             planet.unlocked = savedPlanet.unlocked;
                             planet.pollution = savedPlanet.pollution || 0;
