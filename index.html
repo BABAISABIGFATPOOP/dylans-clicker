@@ -573,25 +573,74 @@
             width: 380px;
             background: rgba(0, 0, 0, 0.5);
             padding: 20px;
-            overflow-y: auto;
             border-left: 2px solid #333;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .shop-title {
             font-size: 1.5rem;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             color: #ff6b6b;
             border-bottom: 2px solid #ff6b6b;
             padding-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .upgrades-scroll {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding-right: 5px;
+            min-height: 200px;
+        }
+
+        .other-shops-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+            border-top: 2px solid #444;
+            padding-top: 10px;
+        }
+
+        .upgrades-scroll::-webkit-scrollbar,
+        .other-shops-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .upgrades-scroll::-webkit-scrollbar-track,
+        .other-shops-scroll::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .upgrades-scroll::-webkit-scrollbar-thumb {
+            background: #ff6b6b;
+            border-radius: 4px;
+        }
+
+        .other-shops-scroll::-webkit-scrollbar-thumb {
+            background: #ffd700;
+            border-radius: 4px;
+        }
+
+        .upgrades-scroll::-webkit-scrollbar-thumb:hover,
+        .other-shops-scroll::-webkit-scrollbar-thumb:hover {
+            background: #fff;
         }
 
         .section-title {
             font-size: 1.1rem;
             color: #ffd700;
-            margin: 20px 0 10px 0;
+            margin: 15px 0 10px 0;
             padding-bottom: 5px;
             border-bottom: 1px solid #ffd700;
+        }
+
+        .section-title:first-child {
+            margin-top: 0;
         }
 
         .upgrade-item, .planet-item {
@@ -797,6 +846,15 @@
                 width: 100%;
                 border-left: none;
                 border-top: 2px solid #333;
+                max-height: none;
+                flex: none;
+            }
+            .upgrades-scroll {
+                max-height: 300px;
+                min-height: 150px;
+            }
+            .other-shops-scroll {
+                max-height: 400px;
             }
             .globe-btn {
                 width: 180px;
@@ -879,13 +937,17 @@
         </div>
         <div class="shop-panel">
             <h2 class="shop-title">Pollution Sources</h2>
-            <div id="upgrades"></div>
-            <div class="section-title">Unlock Planets</div>
-            <div id="planet-shop"></div>
-            <div class="section-title" style="color: #39ff14; border-color: #39ff14;">☢️ Toxic Waste Upgrades</div>
-            <div id="toxic-shop"></div>
-            <div class="section-title" style="color: #9b30ff; border-color: #9b30ff;">⭐ Unlock Solar Systems</div>
-            <div id="system-shop"></div>
+            <div class="upgrades-scroll">
+                <div id="upgrades"></div>
+            </div>
+            <div class="other-shops-scroll">
+                <div class="section-title">Unlock Planets</div>
+                <div id="planet-shop"></div>
+                <div class="section-title" style="color: #39ff14; border-color: #39ff14;">☢️ Toxic Waste Upgrades</div>
+                <div id="toxic-shop"></div>
+                <div class="section-title" style="color: #9b30ff; border-color: #9b30ff;">⭐ Unlock Solar Systems</div>
+                <div id="system-shop"></div>
+            </div>
         </div>
     </div>
     <div class="stats">
