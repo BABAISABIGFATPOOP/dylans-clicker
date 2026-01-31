@@ -619,7 +619,7 @@
             setTimeout(() => smoke.remove(), 2000);
         }
 
-        // Update display
+        // Update display (without re-rendering upgrades)
         function updateDisplay() {
             pollutionDisplay.textContent = formatNumber(pollution);
             ppsDisplay.textContent = formatNumber(pollutionPerSecond);
@@ -627,7 +627,19 @@
             totalClicksDisplay.textContent = formatNumber(totalClicks);
             totalPollutionDisplay.textContent = formatNumber(totalPollution);
             updateGlobeAppearance();
-            renderUpgrades();
+            updateUpgradeStates();
+        }
+
+        // Update upgrade enabled/disabled states without full re-render
+        function updateUpgradeStates() {
+            const items = upgradesContainer.querySelectorAll('.upgrade-item');
+            items.forEach((item, index) => {
+                if (upgrades[index]) {
+                    const cost = getCost(upgrades[index]);
+                    const canAfford = pollution >= cost;
+                    item.classList.toggle('disabled', !canAfford);
+                }
+            });
         }
 
         // Render upgrades
@@ -666,6 +678,7 @@
                     pollutionPerSecond += upgrade.power;
                 }
 
+                renderUpgrades();
                 updateDisplay();
                 saveGame();
             }
@@ -744,6 +757,7 @@
 
         // Initialize game
         loadGame();
+        renderUpgrades();
         updateDisplay();
     </script>
 </body>
