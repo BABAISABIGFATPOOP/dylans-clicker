@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pollution Clicker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #2d1f3d 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .score-display {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .score {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #7cfc00;
+            text-shadow: 0 0 20px rgba(124, 252, 0, 0.5);
+        }
+
+        .score.polluted {
+            color: #ff4444;
+            text-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+        }
+
+        .per-second {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-top: 10px;
+        }
+
+        .globe-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+        }
+
+        .globe-btn {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            border: none;
+            background: radial-gradient(circle at 30% 30%, #4a90d9, #1e5799 40%, #0d3a6e 70%, #082040);
+            cursor: pointer;
+            position: relative;
+            box-shadow:
+                0 0 60px rgba(30, 87, 153, 0.4),
+                inset -20px -20px 40px rgba(0, 0, 0, 0.4),
+                inset 10px 10px 40px rgba(255, 255, 255, 0.1);
+            transition: transform 0.1s, filter 0.3s;
+            overflow: hidden;
+        }
+
+        .globe-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .globe-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Continents */
+        .globe-btn::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 20%;
+            width: 80px;
+            height: 50px;
+            background: #3d8b40;
+            border-radius: 40% 60% 50% 40%;
+            box-shadow:
+                60px 30px 0 20px #3d8b40,
+                -10px 80px 0 15px #3d8b40,
+                70px 90px 0 25px #3d8b40,
+                30px 120px 0 10px #3d8b40;
+            transition: background 0.5s, box-shadow 0.5s;
+        }
+
+        /* Clouds/atmosphere */
+        .globe-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50%;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(255,255,255,0.3) 0%, transparent 30%),
+                radial-gradient(ellipse at 70% 60%, rgba(255,255,255,0.15) 0%, transparent 25%);
+            pointer-events: none;
+        }
+
+        .smog-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(139, 90, 43, 0) 0%, rgba(139, 90, 43, 0) 100%);
+            pointer-events: none;
+            transition: background 0.5s;
+        }
+
+        .pollution-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .shop-panel {
+            width: 380px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            overflow-y: auto;
+            border-left: 2px solid #333;
+        }
+
+        .shop-title {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+            border-bottom: 2px solid #ff6b6b;
+            padding-bottom: 10px;
+        }
+
+        .upgrade-item {
+            background: linear-gradient(135deg, #2a2a3a 0%, #1a1a2a 100%);
+            border: 2px solid #444;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upgrade-item:hover:not(.disabled) {
+            border-color: #ff6b6b;
+            transform: translateX(-5px);
+        }
+
+        .upgrade-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .upgrade-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .upgrade-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .upgrade-icon {
+            font-size: 1.3rem;
+            margin-right: 8px;
+        }
+
+        .upgrade-count {
+            background: #ff6b6b;
+            color: #000;
+            padding: 2px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+
+        .upgrade-desc {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .upgrade-cost {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .click-particle {
+            position: fixed;
+            pointer-events: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #888;
+            text-shadow: 0 0 10px rgba(100, 100, 100, 0.8);
+            animation: float-up 1s ease-out forwards;
+            z-index: 1000;
+        }
+
+        @keyframes float-up {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(1.5);
+            }
+        }
+
+        .smoke-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: rgba(100, 100, 100, 0.6);
+            border-radius: 50%;
+            animation: smoke-rise 2s ease-out forwards;
+        }
+
+        @keyframes smoke-rise {
+            0% {
+                opacity: 0.8;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-150px) scale(3);
+            }
+        }
+
+        .stats {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            border: 1px solid #333;
+        }
+
+        .stats div {
+            margin: 5px 0;
+        }
+
+        .pollution-bar {
+            width: 100%;
+            height: 20px;
+            background: #1a1a1a;
+            border-radius: 10px;
+            margin-top: 15px;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+
+        .pollution-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80, #fbbf24, #f87171, #7c3aed);
+            transition: width 0.3s;
+            border-radius: 10px;
+        }
+
+        .pollution-label {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                flex-direction: column;
+            }
+            .shop-panel {
+                width: 100%;
+                border-left: none;
+                border-top: 2px solid #333;
+            }
+            .globe-btn {
+                width: 180px;
+                height: 180px;
+            }
+            .globe-container {
+                width: 200px;
+                height: 200px;
+            }
+            .stats {
+                position: static;
+                margin: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="main-area">
+            <div class="score-display">
+                <div class="score" id="score-text"><span id="pollution">0</span> tons of CO2</div>
+                <div class="per-second">polluting at: <span id="pps">0</span>/sec</div>
+            </div>
+            <div class="globe-container">
+                <button class="globe-btn" id="globe" title="Pollute the Earth!"></button>
+                <div class="smog-layer" id="smog"></div>
+                <div class="pollution-particles" id="particles"></div>
+            </div>
+            <div class="pollution-bar">
+                <div class="pollution-fill" id="pollution-fill" style="width: 0%"></div>
+            </div>
+            <div class="pollution-label">World Pollution Level: <span id="pollution-percent">0</span>%</div>
+        </div>
+        <div class="shop-panel">
+            <h2 class="shop-title">Pollution Sources</h2>
+            <div id="upgrades"></div>
+        </div>
+    </div>
+    <div class="stats">
+        <div>Pollution Power: <span id="click-power">1</span> tons/click</div>
+        <div>Total Clicks: <span id="total-clicks">0</span></div>
+        <div>Total Pollution: <span id="total-pollution">0</span> tons</div>
+    </div>
+
+    <script>
+        // Game State
+        let pollution = 0;
+        let pollutionPerClick = 1;
+        let pollutionPerSecond = 0;
+        let totalClicks = 0;
+        let totalPollution = 0;
+        const maxPollution = 1000000000000; // 1 trillion for 100%
+
+        // Upgrades
+        const upgrades = [
+            {
+                id: 'car',
+                name: 'Old Car',
+                icon: '🚗',
+                desc: '+1 ton per click',
+                baseCost: 15,
+                owned: 0,
+                type: 'click',
+                power: 1
+            },
+            {
+                id: 'factory',
+                name: 'Coal Factory',
+                icon: '🏭',
+                desc: 'Emits 2 tons per second',
+                baseCost: 100,
+                owned: 0,
+                type: 'auto',
+                power: 2
+            },
+            {
+                id: 'plane',
+                name: 'Airplane Fleet',
+                icon: '✈️',
+                desc: 'Emits 10 tons per second',
+                baseCost: 500,
+                owned: 0,
+                type: 'auto',
+                power: 10
+            },
+            {
+                id: 'tanker',
+                name: 'Oil Tanker',
+                icon: '🛢️',
+                desc: 'Spills 50 tons per second',
+                baseCost: 2500,
+                owned: 0,
+                type: 'auto',
+                power: 50
+            },
+            {
+                id: 'powerplant',
+                name: 'Power Plant',
+                icon: '⚡',
+                desc: 'Burns 200 tons per second',
+                baseCost: 15000,
+                owned: 0,
+                type: 'auto',
+                power: 200
+            },
+            {
+                id: 'deforest',
+                name: 'Deforestation Co.',
+                icon: '🪓',
+                desc: 'Releases 800 tons per second',
+                baseCost: 75000,
+                owned: 0,
+                type: 'auto',
+                power: 800
+            },
+            {
+                id: 'oilrig',
+                name: 'Offshore Oil Rig',
+                icon: '🛢️',
+                desc: 'Pumps 3,000 tons per second',
+                baseCost: 400000,
+                owned: 0,
+                type: 'auto',
+                power: 3000
+            },
+            {
+                id: 'megacorp',
+                name: 'Mega Corporation',
+                icon: '🏢',
+                desc: 'Pollutes 15,000 tons per second',
+                baseCost: 2500000,
+                owned: 0,
+                type: 'auto',
+                power: 15000
+            }
+        ];
+
+        // DOM Elements
+        const globeBtn = document.getElementById('globe');
+        const smogLayer = document.getElementById('smog');
+        const particlesContainer = document.getElementById('particles');
+        const pollutionDisplay = document.getElementById('pollution');
+        const ppsDisplay = document.getElementById('pps');
+        const upgradesContainer = document.getElementById('upgrades');
+        const clickPowerDisplay = document.getElementById('click-power');
+        const totalClicksDisplay = document.getElementById('total-clicks');
+        const totalPollutionDisplay = document.getElementById('total-pollution');
+        const pollutionFill = document.getElementById('pollution-fill');
+        const pollutionPercent = document.getElementById('pollution-percent');
+        const scoreText = document.getElementById('score-text');
+
+        // Calculate upgrade cost
+        function getCost(upgrade) {
+            return Math.floor(upgrade.baseCost * Math.pow(1.15, upgrade.owned));
+        }
+
+        // Format large numbers
+        function formatNumber(num) {
+            if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+            return Math.floor(num).toString();
+        }
+
+        // Update globe appearance based on pollution
+        function updateGlobeAppearance() {
+            const percent = Math.min((totalPollution / maxPollution) * 100, 100);
+            const smogOpacity = Math.min(percent / 100, 0.7);
+
+            smogLayer.style.background = `radial-gradient(circle,
+                rgba(139, 90, 43, ${smogOpacity * 0.5}) 0%,
+                rgba(80, 60, 30, ${smogOpacity}) 50%,
+                rgba(50, 40, 20, ${smogOpacity * 0.8}) 100%)`;
+
+            // Change globe colors as pollution increases
+            if (percent > 75) {
+                globeBtn.style.background = `radial-gradient(circle at 30% 30%, #8b7355, #5c4a3a 40%, #3d3028 70%, #1a1510)`;
+            } else if (percent > 50) {
+                globeBtn.style.background = `radial-gradient(circle at 30% 30%, #6a8b9a, #3d5c6e 40%, #2a4050 70%, #152030)`;
+            } else if (percent > 25) {
+                globeBtn.style.background = `radial-gradient(circle at 30% 30%, #5a9aca, #2a6a99 40%, #1a4a70 70%, #0a2a40)`;
+            }
+
+            pollutionFill.style.width = percent + '%';
+            pollutionPercent.textContent = percent.toFixed(2);
+
+            if (percent > 50) {
+                scoreText.classList.add('polluted');
+            } else {
+                scoreText.classList.remove('polluted');
+            }
+        }
+
+        // Create click particle effect
+        function createParticle(x, y, amount) {
+            const particle = document.createElement('div');
+            particle.className = 'click-particle';
+            particle.textContent = '+' + formatNumber(amount);
+            particle.style.left = x + 'px';
+            particle.style.top = y + 'px';
+            document.body.appendChild(particle);
+            setTimeout(() => particle.remove(), 1000);
+        }
+
+        // Create smoke particle
+        function createSmoke() {
+            const smoke = document.createElement('div');
+            smoke.className = 'smoke-particle';
+            smoke.style.left = (Math.random() * 200 + 40) + 'px';
+            smoke.style.top = (Math.random() * 100 + 100) + 'px';
+            particlesContainer.appendChild(smoke);
+            setTimeout(() => smoke.remove(), 2000);
+        }
+
+        // Update display
+        function updateDisplay() {
+            pollutionDisplay.textContent = formatNumber(pollution);
+            ppsDisplay.textContent = formatNumber(pollutionPerSecond);
+            clickPowerDisplay.textContent = formatNumber(pollutionPerClick);
+            totalClicksDisplay.textContent = formatNumber(totalClicks);
+            totalPollutionDisplay.textContent = formatNumber(totalPollution);
+            updateGlobeAppearance();
+            renderUpgrades();
+        }
+
+        // Render upgrades
+        function renderUpgrades() {
+            upgradesContainer.innerHTML = '';
+            upgrades.forEach(upgrade => {
+                const cost = getCost(upgrade);
+                const canAfford = pollution >= cost;
+
+                const div = document.createElement('div');
+                div.className = 'upgrade-item' + (canAfford ? '' : ' disabled');
+                div.innerHTML = `
+                    <div class="upgrade-header">
+                        <span><span class="upgrade-icon">${upgrade.icon}</span><span class="upgrade-name">${upgrade.name}</span></span>
+                        <span class="upgrade-count">${upgrade.owned}</span>
+                    </div>
+                    <div class="upgrade-desc">${upgrade.desc}</div>
+                    <div class="upgrade-cost">Cost: ${formatNumber(cost)} tons</div>
+                `;
+
+                div.addEventListener('click', () => buyUpgrade(upgrade));
+                upgradesContainer.appendChild(div);
+            });
+        }
+
+        // Buy upgrade
+        function buyUpgrade(upgrade) {
+            const cost = getCost(upgrade);
+            if (pollution >= cost) {
+                pollution -= cost;
+                upgrade.owned++;
+
+                if (upgrade.type === 'click') {
+                    pollutionPerClick += upgrade.power;
+                } else if (upgrade.type === 'auto') {
+                    pollutionPerSecond += upgrade.power;
+                }
+
+                updateDisplay();
+                saveGame();
+            }
+        }
+
+        // Globe click handler
+        globeBtn.addEventListener('click', (e) => {
+            pollution += pollutionPerClick;
+            totalClicks++;
+            totalPollution += pollutionPerClick;
+
+            const rect = globeBtn.getBoundingClientRect();
+            const x = e.clientX || (rect.left + rect.width / 2);
+            const y = e.clientY || (rect.top + rect.height / 2);
+            createParticle(x - 20, y - 20, pollutionPerClick);
+
+            // Create smoke on click
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => createSmoke(), i * 100);
+            }
+
+            updateDisplay();
+        });
+
+        // Auto-pollution loop
+        setInterval(() => {
+            if (pollutionPerSecond > 0) {
+                pollution += pollutionPerSecond / 10;
+                totalPollution += pollutionPerSecond / 10;
+                updateDisplay();
+
+                // Random smoke particles
+                if (Math.random() < 0.3) {
+                    createSmoke();
+                }
+            }
+        }, 100);
+
+        // Save game
+        function saveGame() {
+            const saveData = {
+                pollution,
+                pollutionPerClick,
+                pollutionPerSecond,
+                totalClicks,
+                totalPollution,
+                upgrades: upgrades.map(u => ({ id: u.id, owned: u.owned }))
+            };
+            localStorage.setItem('pollutionClickerSave', JSON.stringify(saveData));
+        }
+
+        // Load game
+        function loadGame() {
+            const saved = localStorage.getItem('pollutionClickerSave');
+            if (saved) {
+                const data = JSON.parse(saved);
+                pollution = data.pollution || 0;
+                pollutionPerClick = data.pollutionPerClick || 1;
+                pollutionPerSecond = data.pollutionPerSecond || 0;
+                totalClicks = data.totalClicks || 0;
+                totalPollution = data.totalPollution || 0;
+
+                if (data.upgrades) {
+                    data.upgrades.forEach(savedUpgrade => {
+                        const upgrade = upgrades.find(u => u.id === savedUpgrade.id);
+                        if (upgrade) {
+                            upgrade.owned = savedUpgrade.owned;
+                        }
+                    });
+                }
+            }
+        }
+
+        // Auto-save every 30 seconds
+        setInterval(saveGame, 30000);
+
+        // Initialize game
+        loadGame();
+        updateDisplay();
+    </script>
+</body>
+</html>
