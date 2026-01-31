@@ -70,6 +70,120 @@
             color: #ffd700;
         }
 
+        .toxic-waste-display {
+            position: fixed;
+            top: 50px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #39ff14;
+            border-radius: 10px;
+            padding: 10px 15px;
+            z-index: 99;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toxic-waste-display:hover {
+            border-color: #7fff00;
+            transform: scale(1.05);
+        }
+
+        .toxic-waste-display .icon {
+            font-size: 2rem;
+            display: block;
+            animation: glow-pulse 2s infinite;
+        }
+
+        .toxic-waste-display.ready .icon {
+            animation: glow-pulse 0.5s infinite, bounce 0.5s infinite;
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { filter: drop-shadow(0 0 5px #39ff14); }
+            50% { filter: drop-shadow(0 0 15px #39ff14); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .toxic-waste-display .count {
+            color: #39ff14;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .toxic-waste-display .timer {
+            color: #888;
+            font-size: 0.75rem;
+            margin-top: 3px;
+        }
+
+        .toxic-waste-shop {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #39ff14;
+        }
+
+        .toxic-upgrade {
+            background: linear-gradient(135deg, #1a2a1a 0%, #0a1a0a 100%);
+            border: 2px solid #2a4a2a;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toxic-upgrade:hover:not(.disabled) {
+            border-color: #39ff14;
+        }
+
+        .toxic-upgrade.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .toxic-upgrade .name {
+            color: #39ff14;
+            font-weight: bold;
+        }
+
+        .toxic-upgrade .desc {
+            color: #888;
+            font-size: 0.8rem;
+            margin: 5px 0;
+        }
+
+        .toxic-upgrade .cost {
+            color: #7fff00;
+            font-size: 0.9rem;
+        }
+
+        .sound-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #444;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 100;
+        }
+
+        .sound-toggle:hover {
+            border-color: #888;
+        }
+
         .game-container {
             padding-top: 50px;
         }
@@ -394,6 +508,12 @@
         <div class="news-label">NEWS</div>
         <div class="news-text" id="news-text">Welcome to Earth. The air is still breathable... for now.</div>
     </div>
+    <div class="toxic-waste-display" id="toxic-waste" title="Click to collect when ready!">
+        <span class="icon">☢️</span>
+        <div class="count"><span id="toxic-count">0</span> Toxic Waste</div>
+        <div class="timer" id="toxic-timer">Growing...</div>
+    </div>
+    <button class="sound-toggle" id="sound-toggle" title="Toggle Sound">🔊</button>
     <div class="game-container">
         <div class="main-area">
             <div class="planet-selector" id="planet-tabs"></div>
@@ -418,6 +538,8 @@
             <div id="upgrades"></div>
             <div class="section-title">Unlock Planets</div>
             <div id="planet-shop"></div>
+            <div class="section-title" style="color: #39ff14; border-color: #39ff14;">☢️ Toxic Waste Upgrades</div>
+            <div id="toxic-shop"></div>
         </div>
     </div>
     <div class="stats">
@@ -634,6 +756,111 @@
         let totalClicks = 0;
         let totalPollution = 0;
 
+        // Toxic Waste System (like Sugar Lumps)
+        let toxicWaste = 0;
+        let toxicWasteProgress = 0;
+        let toxicWasteReady = false;
+        const toxicWasteTime = 300000; // 5 minutes to grow
+        let lastToxicTime = Date.now();
+
+        // Toxic Waste Upgrades
+        const toxicUpgrades = [
+            { id: 'toxic_click', name: 'Radioactive Fingers', desc: '+50% click power permanently', cost: 1, owned: 0, effect: 'clickMult', value: 0.5 },
+            { id: 'toxic_auto', name: 'Mutant Workers', desc: '+50% auto pollution permanently', cost: 1, owned: 0, effect: 'autoMult', value: 0.5 },
+            { id: 'toxic_speed', name: 'Accelerated Decay', desc: 'Toxic waste grows 20% faster', cost: 2, owned: 0, effect: 'wasteSpeed', value: 0.2 },
+            { id: 'toxic_planet', name: 'Planetary Corruption', desc: '+25% to all planet multipliers', cost: 3, owned: 0, effect: 'planetMult', value: 0.25 },
+            { id: 'toxic_double', name: 'Chain Reaction', desc: '10% chance for double toxic waste', cost: 5, owned: 0, effect: 'wasteDouble', value: 0.1 },
+            { id: 'toxic_golden', name: 'Golden Sludge', desc: 'Rare golden waste worth 3x', cost: 5, owned: 0, effect: 'goldenChance', value: 0.1 },
+            { id: 'toxic_mega', name: 'Mega Mutation', desc: '+100% to everything', cost: 10, owned: 0, effect: 'megaMult', value: 1.0 },
+            { id: 'toxic_transcend', name: 'Transcend Reality', desc: 'Pollution transcends dimensions (+500%)', cost: 25, owned: 0, effect: 'transcend', value: 5.0 },
+        ];
+
+        // Toxic multipliers
+        let toxicClickMult = 1;
+        let toxicAutoMult = 1;
+        let toxicWasteSpeedMult = 1;
+        let toxicPlanetMult = 1;
+        let toxicDoubleChance = 0;
+        let toxicGoldenChance = 0;
+
+        // Sound System
+        let soundEnabled = true;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled || !audioCtx) return;
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            switch(type) {
+                case 'click':
+                    oscillator.frequency.value = 300;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.1);
+                    break;
+                case 'buy':
+                    oscillator.frequency.value = 400;
+                    oscillator.type = 'square';
+                    gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.15);
+                    break;
+                case 'toxic':
+                    oscillator.frequency.value = 150;
+                    oscillator.type = 'sawtooth';
+                    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.4);
+                    break;
+                case 'unlock':
+                    oscillator.frequency.value = 523;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    setTimeout(() => {
+                        if (audioCtx) {
+                            const osc2 = audioCtx.createOscillator();
+                            const gain2 = audioCtx.createGain();
+                            osc2.connect(gain2);
+                            gain2.connect(audioCtx.destination);
+                            osc2.frequency.value = 659;
+                            osc2.type = 'sine';
+                            gain2.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                            gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                            osc2.start(audioCtx.currentTime);
+                            osc2.stop(audioCtx.currentTime + 0.2);
+                        }
+                    }, 100);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.15);
+                    break;
+                case 'ready':
+                    oscillator.frequency.value = 880;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.3);
+                    break;
+            }
+        }
+
         // Upgrades
         const upgrades = [
             // CLICK UPGRADES
@@ -691,6 +918,142 @@
         const multiplierDisplay = document.getElementById('multiplier-display');
         const planetsDestroyedDisplay = document.getElementById('planets-destroyed');
         const newsText = document.getElementById('news-text');
+        const toxicWasteDisplay = document.getElementById('toxic-waste');
+        const toxicCountDisplay = document.getElementById('toxic-count');
+        const toxicTimerDisplay = document.getElementById('toxic-timer');
+        const toxicShop = document.getElementById('toxic-shop');
+        const soundToggle = document.getElementById('sound-toggle');
+
+        // Sound toggle
+        soundToggle.addEventListener('click', () => {
+            initAudio();
+            soundEnabled = !soundEnabled;
+            soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
+            if (soundEnabled) playSound('click');
+        });
+
+        // Toxic waste functions
+        function updateToxicWaste() {
+            const now = Date.now();
+            const elapsed = now - lastToxicTime;
+            const adjustedTime = toxicWasteTime / toxicWasteSpeedMult;
+
+            if (!toxicWasteReady) {
+                toxicWasteProgress = Math.min(elapsed / adjustedTime, 1);
+
+                if (toxicWasteProgress >= 1) {
+                    toxicWasteReady = true;
+                    toxicWasteDisplay.classList.add('ready');
+                    toxicTimerDisplay.textContent = 'READY! Click to collect!';
+                    playSound('ready');
+                } else {
+                    const remaining = Math.ceil((adjustedTime - elapsed) / 1000);
+                    const mins = Math.floor(remaining / 60);
+                    const secs = remaining % 60;
+                    toxicTimerDisplay.textContent = `${mins}:${secs.toString().padStart(2, '0')} until ready`;
+                }
+            }
+
+            toxicCountDisplay.textContent = toxicWaste;
+        }
+
+        function collectToxicWaste() {
+            if (!toxicWasteReady) return;
+
+            initAudio();
+            let amount = 1;
+
+            // Check for double chance
+            if (Math.random() < toxicDoubleChance) {
+                amount *= 2;
+                newsText.innerHTML = "☢️ <span>CHAIN REACTION!</span> Double toxic waste collected!";
+            }
+
+            // Check for golden waste
+            if (Math.random() < toxicGoldenChance) {
+                amount *= 3;
+                newsText.innerHTML = "✨ <span>GOLDEN SLUDGE!</span> Triple toxic waste collected!";
+            }
+
+            toxicWaste += amount;
+            toxicWasteReady = false;
+            toxicWasteProgress = 0;
+            lastToxicTime = Date.now();
+            toxicWasteDisplay.classList.remove('ready');
+            playSound('toxic');
+            updateToxicWaste();
+            renderToxicShop();
+            saveGame();
+        }
+
+        toxicWasteDisplay.addEventListener('click', collectToxicWaste);
+
+        function applyToxicUpgrade(upgrade) {
+            switch(upgrade.effect) {
+                case 'clickMult':
+                    toxicClickMult += upgrade.value;
+                    break;
+                case 'autoMult':
+                    toxicAutoMult += upgrade.value;
+                    break;
+                case 'wasteSpeed':
+                    toxicWasteSpeedMult += upgrade.value;
+                    break;
+                case 'planetMult':
+                    toxicPlanetMult += upgrade.value;
+                    break;
+                case 'wasteDouble':
+                    toxicDoubleChance += upgrade.value;
+                    break;
+                case 'goldenChance':
+                    toxicGoldenChance += upgrade.value;
+                    break;
+                case 'megaMult':
+                    toxicClickMult += upgrade.value;
+                    toxicAutoMult += upgrade.value;
+                    break;
+                case 'transcend':
+                    toxicClickMult += upgrade.value;
+                    toxicAutoMult += upgrade.value;
+                    toxicPlanetMult += upgrade.value * 0.5;
+                    break;
+            }
+        }
+
+        function buyToxicUpgrade(upgrade) {
+            if (toxicWaste >= upgrade.cost) {
+                toxicWaste -= upgrade.cost;
+                upgrade.owned++;
+                upgrade.cost = Math.ceil(upgrade.cost * 2.5); // Cost increases
+                applyToxicUpgrade(upgrade);
+                playSound('unlock');
+                newsText.innerHTML = `☢️ <span>${upgrade.name}</span> activated! The mutation spreads...`;
+                renderToxicShop();
+                updateToxicWaste();
+                saveGame();
+            }
+        }
+
+        function renderToxicShop() {
+            toxicShop.innerHTML = '';
+            toxicUpgrades.forEach((upgrade, index) => {
+                const canAfford = toxicWaste >= upgrade.cost;
+                const div = document.createElement('div');
+                div.className = 'toxic-upgrade' + (canAfford ? '' : ' disabled');
+                div.innerHTML = `
+                    <div class="name">☢️ ${upgrade.name} ${upgrade.owned > 0 ? '(x' + upgrade.owned + ')' : ''}</div>
+                    <div class="desc">${upgrade.desc}</div>
+                    <div class="cost">Cost: ${upgrade.cost} Toxic Waste</div>
+                `;
+                div.addEventListener('click', () => {
+                    if (canAfford) buyToxicUpgrade(upgrade);
+                });
+                toxicShop.appendChild(div);
+            });
+        }
+
+        // Update toxic waste timer
+        setInterval(updateToxicWaste, 1000);
 
         function getCurrentPlanet() {
             return planets[currentPlanetIndex];
@@ -908,6 +1271,9 @@
                 // Show news on first purchase
                 if (wasFirstPurchase && storyMessages.upgrades[upgrade.id]) {
                     newsText.innerHTML = storyMessages.upgrades[upgrade.id];
+                    playSound('unlock');
+                } else {
+                    playSound('buy');
                 }
                 renderUpgrades();
                 updateDisplay();
@@ -916,8 +1282,9 @@
         }
 
         globeBtn.addEventListener('click', (e) => {
+            initAudio();
             const planet = getCurrentPlanet();
-            const amount = pollutionPerClick * planet.multiplier;
+            const amount = pollutionPerClick * planet.multiplier * toxicClickMult * toxicPlanetMult;
             pollution += amount;
             planet.pollution += amount;
             totalClicks++;
@@ -932,13 +1299,14 @@
                 setTimeout(() => createSmoke(), i * 100);
             }
 
+            playSound('click');
             updateDisplay();
         });
 
         setInterval(() => {
             if (pollutionPerSecond > 0) {
                 const planet = getCurrentPlanet();
-                const amount = (pollutionPerSecond * planet.multiplier) / 10;
+                const amount = (pollutionPerSecond * planet.multiplier * toxicAutoMult * toxicPlanetMult) / 10;
                 pollution += amount;
                 planet.pollution += amount;
                 totalPollution += amount;
@@ -960,7 +1328,18 @@
                 currentPlanetIndex,
                 planetsDestroyed,
                 upgrades: upgrades.map(u => ({ id: u.id, owned: u.owned })),
-                planets: planets.map(p => ({ id: p.id, unlocked: p.unlocked, pollution: p.pollution, destroyed: p.destroyed }))
+                planets: planets.map(p => ({ id: p.id, unlocked: p.unlocked, pollution: p.pollution, destroyed: p.destroyed })),
+                // Toxic waste data
+                toxicWaste,
+                lastToxicTime,
+                toxicUpgrades: toxicUpgrades.map(u => ({ id: u.id, owned: u.owned, cost: u.cost })),
+                toxicClickMult,
+                toxicAutoMult,
+                toxicWasteSpeedMult,
+                toxicPlanetMult,
+                toxicDoubleChance,
+                toxicGoldenChance,
+                soundEnabled
             };
             localStorage.setItem('pollutionClickerSave', JSON.stringify(saveData));
         }
@@ -994,6 +1373,29 @@
                         }
                     });
                 }
+
+                // Load toxic waste data
+                toxicWaste = data.toxicWaste || 0;
+                lastToxicTime = data.lastToxicTime || Date.now();
+                toxicClickMult = data.toxicClickMult || 1;
+                toxicAutoMult = data.toxicAutoMult || 1;
+                toxicWasteSpeedMult = data.toxicWasteSpeedMult || 1;
+                toxicPlanetMult = data.toxicPlanetMult || 1;
+                toxicDoubleChance = data.toxicDoubleChance || 0;
+                toxicGoldenChance = data.toxicGoldenChance || 0;
+                soundEnabled = data.soundEnabled !== undefined ? data.soundEnabled : true;
+
+                if (data.toxicUpgrades) {
+                    data.toxicUpgrades.forEach(savedUpgrade => {
+                        const upgrade = toxicUpgrades.find(u => u.id === savedUpgrade.id);
+                        if (upgrade) {
+                            upgrade.owned = savedUpgrade.owned;
+                            upgrade.cost = savedUpgrade.cost;
+                        }
+                    });
+                }
+
+                soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
             }
         }
 
@@ -1180,6 +1582,8 @@
         renderPlanetTabs();
         renderUpgrades();
         renderPlanetShop();
+        renderToxicShop();
+        updateToxicWaste();
         updateDisplay();
     </script>
 </body>
