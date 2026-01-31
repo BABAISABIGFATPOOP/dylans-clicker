@@ -1543,6 +1543,16 @@
             { id: 'p_system', name: 'Interstellar', desc: 'x2 solar system multipliers per level', cost: 10, owned: 0, maxLevel: 5, effect: 'systemBoost', value: 2 },
             { id: 'p_mega', name: 'Carbon Singularity', desc: 'x10 to everything!', cost: 50, owned: 0, maxLevel: 1, effect: 'megaBoost', value: 10 },
             { id: 'p_eternal', name: 'Eternal Pollution', desc: 'x100 prestige multiplier!', cost: 100, owned: 0, maxLevel: 1, effect: 'prestigeBoost', value: 100 },
+            { id: 'p_double', name: 'Double Trouble', desc: 'x3 click AND auto power', cost: 15, owned: 0, maxLevel: 5, effect: 'doubleMult', value: 3 },
+            { id: 'p_quantum', name: 'Quantum Pollution', desc: '+50% chance for double clicks', cost: 20, owned: 0, maxLevel: 4, effect: 'doubleClick', value: 0.125 },
+            { id: 'p_cosmic', name: 'Cosmic Efficiency', desc: 'All upgrades give +25% more', cost: 25, owned: 0, maxLevel: 5, effect: 'upgradeBoost', value: 0.25 },
+            { id: 'p_void', name: 'Void Harvester', desc: '+100% carbon credits per rebirth', cost: 30, owned: 0, maxLevel: 5, effect: 'creditBoost', value: 1 },
+            { id: 'p_dimension', name: 'Dimension Walker', desc: 'x5 pollution when switching planets', cost: 40, owned: 0, maxLevel: 3, effect: 'switchBoost', value: 5 },
+            { id: 'p_infinity', name: 'Infinite Growth', desc: 'x1.5 to prestige multiplier per level', cost: 75, owned: 0, maxLevel: 10, effect: 'prestigeMult', value: 1.5 },
+            { id: 'p_omega', name: 'Omega Protocol', desc: 'x1000 to everything!', cost: 200, owned: 0, maxLevel: 1, effect: 'omegaBoost', value: 1000 },
+            { id: 'p_transcend', name: 'Transcendence', desc: 'Keep 10% of upgrades on rebirth per level', cost: 150, owned: 0, maxLevel: 5, effect: 'keepUpgrades', value: 0.1 },
+            { id: 'p_godmode', name: 'Pollution God', desc: 'x10000 prestige multiplier!', cost: 500, owned: 0, maxLevel: 1, effect: 'godBoost', value: 10000 },
+            { id: 'p_absolute', name: 'Absolute Power', desc: 'x100000 to ALL multipliers!', cost: 1000, owned: 0, maxLevel: 1, effect: 'absoluteBoost', value: 100000 },
         ];
 
         // Prestige multiplier bonuses
@@ -1554,6 +1564,13 @@
         let prestigeToxicStart = 0;
         let prestigeToxicSpeed = 0;
         let prestigeSystemBoost = 1;
+        let prestigeDoubleMult = 1;
+        let prestigeDoubleClickChance = 0;
+        let prestigeUpgradeBoost = 1;
+        let prestigeCreditBoost = 1;
+        let prestigeSwitchBoost = 1;
+        let prestigePrestigeMult = 1;
+        let prestigeKeepUpgrades = 0;
 
         // Permanent Upgrade Levels (persist through prestige, bought with toxic waste)
         // Each level gives +100% power to that upgrade
@@ -2165,7 +2182,7 @@
         function calculatePrestigeGain() {
             // Need at least 1 trillion total pollution to earn carbon credits
             if (totalPollution < 1e12) return 0;
-            return Math.floor(Math.pow(totalPollution / 1e12, 0.5));
+            return Math.floor(Math.pow(totalPollution / 1e12, 0.5) * prestigeCreditBoost);
         }
 
         function calculatePrestigeMultiplier(credits) {
@@ -2175,8 +2192,11 @@
                 if (upgrade.id === 'p_eternal' && upgrade.owned > 0) {
                     mult *= upgrade.value;
                 }
+                if (upgrade.id === 'p_godmode' && upgrade.owned > 0) {
+                    mult *= upgrade.value;
+                }
             }
-            return mult * (1 + credits * 0.1);
+            return mult * prestigePrestigeMult * (1 + credits * 0.1);
         }
 
         function updatePrestigeDisplay() {
@@ -2233,6 +2253,45 @@
                 case 'prestigeBoost':
                     // Handled in calculatePrestigeMultiplier
                     break;
+                case 'doubleMult':
+                    prestigeClickMult *= upgrade.value;
+                    prestigeAutoMult *= upgrade.value;
+                    prestigeDoubleMult *= upgrade.value;
+                    break;
+                case 'doubleClick':
+                    prestigeDoubleClickChance += upgrade.value;
+                    break;
+                case 'upgradeBoost':
+                    prestigeUpgradeBoost += upgrade.value;
+                    break;
+                case 'creditBoost':
+                    prestigeCreditBoost += upgrade.value;
+                    break;
+                case 'switchBoost':
+                    prestigeSwitchBoost *= upgrade.value;
+                    break;
+                case 'prestigeMult':
+                    prestigePrestigeMult *= upgrade.value;
+                    break;
+                case 'keepUpgrades':
+                    prestigeKeepUpgrades += upgrade.value;
+                    break;
+                case 'omegaBoost':
+                    prestigeClickMult *= upgrade.value;
+                    prestigeAutoMult *= upgrade.value;
+                    prestigePlanetBoost *= upgrade.value;
+                    prestigeSystemBoost *= upgrade.value;
+                    break;
+                case 'godBoost':
+                    // Handled in calculatePrestigeMultiplier
+                    break;
+                case 'absoluteBoost':
+                    prestigeClickMult *= upgrade.value;
+                    prestigeAutoMult *= upgrade.value;
+                    prestigePlanetBoost *= upgrade.value;
+                    prestigeSystemBoost *= upgrade.value;
+                    prestigeDoubleMult *= upgrade.value;
+                    break;
             }
         }
 
@@ -2245,6 +2304,13 @@
             prestigeToxicStart = 0;
             prestigeToxicSpeed = 0;
             prestigeSystemBoost = 1;
+            prestigeDoubleMult = 1;
+            prestigeDoubleClickChance = 0;
+            prestigeUpgradeBoost = 1;
+            prestigeCreditBoost = 1;
+            prestigeSwitchBoost = 1;
+            prestigePrestigeMult = 1;
+            prestigeKeepUpgrades = 0;
 
             for (const upgrade of prestigeUpgrades) {
                 for (let i = 0; i < upgrade.owned; i++) {
@@ -2913,7 +2979,13 @@
             const planet = getCurrentPlanet();
             const system = getCurrentSystem();
             const clickPower = calculateClickPower();
-            const amount = clickPower * planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * toxicClickMult * toxicPlanetMult * prestigeClickMult * prestigeMultiplier;
+            let amount = clickPower * planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * toxicClickMult * toxicPlanetMult * prestigeClickMult * prestigeMultiplier;
+
+            // Double click chance from Quantum Pollution upgrade
+            if (Math.random() < prestigeDoubleClickChance) {
+                amount *= 2;
+            }
+
             pollution += amount;
             planet.pollution += amount;
             totalClicks++;
@@ -2994,6 +3066,13 @@
                 prestigeToxicStart,
                 prestigeToxicSpeed,
                 prestigeSystemBoost,
+                prestigeDoubleMult,
+                prestigeDoubleClickChance,
+                prestigeUpgradeBoost,
+                prestigeCreditBoost,
+                prestigeSwitchBoost,
+                prestigePrestigeMult,
+                prestigeKeepUpgrades,
                 // Permanent upgrade levels (persist through prestige)
                 upgradeLevels
             };
@@ -3096,6 +3175,13 @@
                 prestigeToxicStart = data.prestigeToxicStart || 0;
                 prestigeToxicSpeed = data.prestigeToxicSpeed || 0;
                 prestigeSystemBoost = data.prestigeSystemBoost || 1;
+                prestigeDoubleMult = data.prestigeDoubleMult || 1;
+                prestigeDoubleClickChance = data.prestigeDoubleClickChance || 0;
+                prestigeUpgradeBoost = data.prestigeUpgradeBoost || 1;
+                prestigeCreditBoost = data.prestigeCreditBoost || 1;
+                prestigeSwitchBoost = data.prestigeSwitchBoost || 1;
+                prestigePrestigeMult = data.prestigePrestigeMult || 1;
+                prestigeKeepUpgrades = data.prestigeKeepUpgrades || 0;
 
                 if (data.prestigeUpgrades) {
                     data.prestigeUpgrades.forEach(savedUpgrade => {
