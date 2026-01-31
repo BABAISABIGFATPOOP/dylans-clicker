@@ -658,6 +658,56 @@
             color: #4ade80;
         }
 
+        .upgrade-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+        }
+
+        .upgrade-level {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .level-badge {
+            background: linear-gradient(135deg, #39ff14 0%, #1a8a1a 100%);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .level-btn {
+            background: linear-gradient(135deg, #2a4a2a 0%, #1a2a1a 100%);
+            border: 2px solid #39ff14;
+            border-radius: 5px;
+            color: #39ff14;
+            padding: 3px 8px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .level-btn:hover:not(.disabled) {
+            background: linear-gradient(135deg, #3a5a3a 0%, #2a3a2a 100%);
+            transform: scale(1.05);
+        }
+
+        .level-btn.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            border-color: #555;
+            color: #555;
+        }
+
+        .level-bonus {
+            color: #39ff14;
+            font-size: 0.75rem;
+        }
+
         .click-particle {
             position: fixed;
             pointer-events: none;
@@ -1214,6 +1264,67 @@
         let prestigeToxicStart = 0;
         let prestigeToxicSpeed = 0;
         let prestigeSystemBoost = 1;
+
+        // Permanent Upgrade Levels (persist through prestige, bought with toxic waste)
+        // Each level gives +100% power to that upgrade
+        let upgradeLevels = {}; // { upgradeId: level }
+        const maxUpgradeLevel = 10;
+        const upgradeLevelCost = (level) => Math.ceil(Math.pow(1.5, level)); // 1, 2, 3, 5, 8, 12, 18, 27, 41, 61
+
+        function getUpgradeLevel(upgradeId) {
+            return upgradeLevels[upgradeId] || 0;
+        }
+
+        function getUpgradeLevelMultiplier(upgradeId) {
+            const level = getUpgradeLevel(upgradeId);
+            return 1 + level; // Each level = +100% (so level 1 = 2x, level 2 = 3x, etc.)
+        }
+
+        function canLevelUpgrade(upgradeId) {
+            const currentLevel = getUpgradeLevel(upgradeId);
+            if (currentLevel >= maxUpgradeLevel) return false;
+            const cost = upgradeLevelCost(currentLevel);
+            return toxicWaste >= cost;
+        }
+
+        function levelUpUpgrade(upgradeId) {
+            const currentLevel = getUpgradeLevel(upgradeId);
+            if (currentLevel >= maxUpgradeLevel) return;
+            const cost = upgradeLevelCost(currentLevel);
+            if (toxicWaste < cost) return;
+
+            toxicWaste -= cost;
+            upgradeLevels[upgradeId] = currentLevel + 1;
+
+            const upgrade = upgrades.find(u => u.id === upgradeId);
+            playSound('unlock');
+            newsText.innerHTML = `☢️ <span>${upgrade ? upgrade.name : 'Upgrade'}</span> leveled up to ${currentLevel + 1}! +${(currentLevel + 1) * 100}% power!`;
+
+            renderUpgrades();
+            updateToxicWaste();
+            saveGame();
+        }
+
+        // Calculate total click/auto power with upgrade levels
+        function calculateClickPower() {
+            let basePower = 1; // Base click power
+            for (const upgrade of upgrades) {
+                if (upgrade.type === 'click' && upgrade.owned > 0) {
+                    basePower += upgrade.owned * upgrade.power * getUpgradeLevelMultiplier(upgrade.id);
+                }
+            }
+            return basePower;
+        }
+
+        function calculateAutoPower() {
+            let basePower = 0;
+            for (const upgrade of upgrades) {
+                if (upgrade.type === 'auto' && upgrade.owned > 0) {
+                    basePower += upgrade.owned * upgrade.power * getUpgradeLevelMultiplier(upgrade.id);
+                }
+            }
+            return basePower;
+        }
 
         // Sound System
         let soundEnabled = true;
@@ -2103,9 +2214,11 @@
             const planet = getCurrentPlanet();
             const system = getCurrentSystem();
             const totalMult = planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * prestigeMultiplier;
+            const clickPower = calculateClickPower();
+            const autoPower = calculateAutoPower();
             pollutionDisplay.textContent = formatNumber(pollution);
-            ppsDisplay.textContent = formatNumber(pollutionPerSecond * totalMult * toxicAutoMult * toxicPlanetMult * prestigeAutoMult);
-            clickPowerDisplay.textContent = formatNumber(pollutionPerClick * totalMult * toxicClickMult * toxicPlanetMult * prestigeClickMult);
+            ppsDisplay.textContent = formatNumber(autoPower * totalMult * toxicAutoMult * toxicPlanetMult * prestigeAutoMult);
+            clickPowerDisplay.textContent = formatNumber(clickPower * totalMult * toxicClickMult * toxicPlanetMult * prestigeClickMult);
             totalClicksDisplay.textContent = formatNumber(totalClicks);
             totalPollutionDisplay.textContent = formatNumber(totalPollution);
             updatePlanetAppearance();
@@ -2140,6 +2253,11 @@
             upgrades.forEach((upgrade, index) => {
                 const cost = getCost(upgrade);
                 const canAfford = pollution >= cost;
+                const level = getUpgradeLevel(upgrade.id);
+                const levelCost = upgradeLevelCost(level);
+                const canLevel = level < maxUpgradeLevel && toxicWaste >= levelCost;
+                const levelMult = getUpgradeLevelMultiplier(upgrade.id);
+
                 const div = document.createElement('div');
                 div.className = 'upgrade-item' + (canAfford ? '' : ' disabled');
                 div.setAttribute('data-index', index);
@@ -2148,14 +2266,33 @@
                         <span><span class="upgrade-icon">${upgrade.icon}</span><span class="upgrade-name">${upgrade.name}</span></span>
                         <span class="upgrade-count">${upgrade.owned}</span>
                     </div>
-                    <div class="upgrade-desc">${upgrade.desc}</div>
-                    <div class="upgrade-cost">Cost: ${formatNumber(cost)} tons</div>
+                    <div class="upgrade-desc">${upgrade.desc}${levelMult > 1 ? ` <span style="color:#39ff14">(x${levelMult})</span>` : ''}</div>
+                    <div class="upgrade-footer">
+                        <span class="upgrade-cost">Cost: ${formatNumber(cost)} tons</span>
+                        <div class="upgrade-level">
+                            ${level > 0 ? `<span class="level-badge">Lv.${level}</span>` : ''}
+                            <button class="level-btn ${canLevel ? '' : 'disabled'}" data-upgrade-id="${upgrade.id}" title="Spend ${levelCost} Toxic Waste to level up">
+                                ${level >= maxUpgradeLevel ? 'MAX' : `☢️ +Lv (${levelCost})`}
+                            </button>
+                        </div>
+                    </div>
                 `;
                 upgradesContainer.appendChild(div);
             });
         }
 
         upgradesContainer.addEventListener('click', (e) => {
+            // Check if clicking level-up button
+            const levelBtn = e.target.closest('.level-btn');
+            if (levelBtn && !levelBtn.classList.contains('disabled')) {
+                const upgradeId = levelBtn.getAttribute('data-upgrade-id');
+                if (upgradeId) {
+                    levelUpUpgrade(upgradeId);
+                    return;
+                }
+            }
+
+            // Otherwise, try to buy the upgrade
             const item = e.target.closest('.upgrade-item');
             if (item && !item.classList.contains('disabled')) {
                 const index = parseInt(item.getAttribute('data-index'));
@@ -2193,7 +2330,8 @@
             initAudio();
             const planet = getCurrentPlanet();
             const system = getCurrentSystem();
-            const amount = pollutionPerClick * planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * toxicClickMult * toxicPlanetMult * prestigeClickMult * prestigeMultiplier;
+            const clickPower = calculateClickPower();
+            const amount = clickPower * planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * toxicClickMult * toxicPlanetMult * prestigeClickMult * prestigeMultiplier;
             pollution += amount;
             planet.pollution += amount;
             totalClicks++;
@@ -2213,10 +2351,11 @@
         });
 
         setInterval(() => {
-            if (pollutionPerSecond > 0) {
+            const autoPower = calculateAutoPower();
+            if (autoPower > 0) {
                 const planet = getCurrentPlanet();
                 const system = getCurrentSystem();
-                const amount = (pollutionPerSecond * planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * toxicAutoMult * toxicPlanetMult * prestigeAutoMult * prestigeMultiplier) / 10;
+                const amount = (autoPower * planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * toxicAutoMult * toxicPlanetMult * prestigeAutoMult * prestigeMultiplier) / 10;
                 pollution += amount;
                 planet.pollution += amount;
                 totalPollution += amount;
@@ -2266,7 +2405,9 @@
                 prestigePlanetBoost,
                 prestigeToxicStart,
                 prestigeToxicSpeed,
-                prestigeSystemBoost
+                prestigeSystemBoost,
+                // Permanent upgrade levels (persist through prestige)
+                upgradeLevels
             };
             localStorage.setItem('pollutionClickerSave', JSON.stringify(saveData));
         }
@@ -2355,6 +2496,11 @@
                             upgrade.cost = savedUpgrade.cost;
                         }
                     });
+                }
+
+                // Load permanent upgrade levels
+                if (data.upgradeLevels) {
+                    upgradeLevels = data.upgradeLevels;
                 }
 
                 soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
