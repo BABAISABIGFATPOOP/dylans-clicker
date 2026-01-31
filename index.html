@@ -1399,6 +1399,37 @@
             }
         }
 
+        // Planet sound profiles - each planet has unique sound characteristics
+        const planetSounds = {
+            earth: { baseFreq: 300, type: 'sine', color: 'warm' },
+            mercury: { baseFreq: 500, type: 'square', color: 'metallic' },
+            venus: { baseFreq: 250, type: 'sawtooth', color: 'harsh' },
+            mars: { baseFreq: 200, type: 'triangle', color: 'dusty' },
+            ceres: { baseFreq: 400, type: 'sine', color: 'hollow' },
+            jupiter: { baseFreq: 120, type: 'sawtooth', color: 'deep' },
+            saturn: { baseFreq: 180, type: 'triangle', color: 'ringed' },
+            neptune: { baseFreq: 350, type: 'sine', color: 'watery' },
+            pluto: { baseFreq: 600, type: 'square', color: 'cold' },
+            haumea: { baseFreq: 450, type: 'triangle', color: 'egg' },
+            eris: { baseFreq: 280, type: 'sawtooth', color: 'chaotic' },
+            sun: { baseFreq: 80, type: 'sawtooth', color: 'blazing' }
+        };
+
+        // Solar system sound modifiers
+        const systemSounds = {
+            sol: { freqMult: 1, detune: 0, reverb: 0.1 },
+            alpha_centauri: { freqMult: 1.2, detune: 50, reverb: 0.2 },
+            trappist: { freqMult: 0.8, detune: -30, reverb: 0.3 },
+            kepler442: { freqMult: 1.5, detune: 100, reverb: 0.25 },
+            gliese: { freqMult: 0.7, detune: -50, reverb: 0.4 },
+            kepler22: { freqMult: 1.1, detune: 25, reverb: 0.5 },
+            proxima: { freqMult: 0.9, detune: -20, reverb: 0.35 },
+            tau_ceti: { freqMult: 1.0, detune: 10, reverb: 0.15 },
+            andromeda: { freqMult: 1.8, detune: 200, reverb: 0.6 },
+            void: { freqMult: 0.5, detune: -100, reverb: 0.8 },
+            origin: { freqMult: 2.0, detune: 300, reverb: 1.0 }
+        };
+
         function playSound(type) {
             if (!soundEnabled || !audioCtx) return;
 
@@ -1408,22 +1439,62 @@
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
 
+            // Get current planet and system sound profiles
+            const planet = planets[currentPlanetIndex];
+            const system = solarSystems[currentSystemIndex];
+            const pSound = planetSounds[planet?.id] || planetSounds.earth;
+            const sSound = systemSounds[system?.id] || systemSounds.sol;
+
             switch(type) {
                 case 'click':
-                    oscillator.frequency.value = 300 + Math.random() * 50;
-                    oscillator.type = 'sine';
+                    // Sound varies by planet and system
+                    const clickFreq = pSound.baseFreq * sSound.freqMult + Math.random() * 50;
+                    oscillator.frequency.value = clickFreq;
+                    oscillator.type = pSound.type;
+                    oscillator.detune.value = sSound.detune + Math.random() * 20;
                     gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1 + sSound.reverb * 0.1);
                     oscillator.start(audioCtx.currentTime);
-                    oscillator.stop(audioCtx.currentTime + 0.1);
+                    oscillator.stop(audioCtx.currentTime + 0.1 + sSound.reverb * 0.1);
+                    // Add harmonic for certain planets
+                    if (pSound.color === 'deep' || pSound.color === 'blazing') {
+                        const osc2 = audioCtx.createOscillator();
+                        const gain2 = audioCtx.createGain();
+                        osc2.connect(gain2);
+                        gain2.connect(audioCtx.destination);
+                        osc2.frequency.value = clickFreq * 0.5;
+                        osc2.type = 'sine';
+                        gain2.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                        gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                        osc2.start(audioCtx.currentTime);
+                        osc2.stop(audioCtx.currentTime + 0.15);
+                    }
                     break;
                 case 'buy':
-                    oscillator.frequency.value = 400;
-                    oscillator.type = 'square';
+                    const buyFreq = (pSound.baseFreq + 100) * sSound.freqMult;
+                    oscillator.frequency.value = buyFreq;
+                    oscillator.type = pSound.type === 'sine' ? 'square' : pSound.type;
+                    oscillator.detune.value = sSound.detune;
                     gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
                     oscillator.start(audioCtx.currentTime);
                     oscillator.stop(audioCtx.currentTime + 0.15);
+                    // Second tone for confirmation
+                    setTimeout(() => {
+                        if (audioCtx) {
+                            const osc2 = audioCtx.createOscillator();
+                            const gain2 = audioCtx.createGain();
+                            osc2.connect(gain2);
+                            gain2.connect(audioCtx.destination);
+                            osc2.frequency.value = buyFreq * 1.25;
+                            osc2.type = 'sine';
+                            osc2.detune.value = sSound.detune;
+                            gain2.gain.setValueAtTime(0.06, audioCtx.currentTime);
+                            gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                            osc2.start(audioCtx.currentTime);
+                            osc2.stop(audioCtx.currentTime + 0.1);
+                        }
+                    }, 80);
                     break;
                 case 'toxic':
                     oscillator.frequency.value = 150;
@@ -1464,39 +1535,62 @@
                     oscillator.stop(audioCtx.currentTime + 0.3);
                     break;
                 case 'planet':
-                    // Whoosh sound for planet switching
-                    oscillator.frequency.value = 200;
-                    oscillator.type = 'sine';
+                    // Planet-specific whoosh sound
+                    const planetStartFreq = pSound.baseFreq * 0.5;
+                    const planetEndFreq = pSound.baseFreq * 2;
+                    oscillator.frequency.value = planetStartFreq;
+                    oscillator.type = pSound.type;
+                    oscillator.detune.value = sSound.detune;
                     gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.3);
+                    oscillator.frequency.exponentialRampToValueAtTime(planetEndFreq, audioCtx.currentTime + 0.3);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
                     oscillator.start(audioCtx.currentTime);
                     oscillator.stop(audioCtx.currentTime + 0.3);
+                    // Add planet-specific harmonic
+                    if (pSound.color === 'watery' || pSound.color === 'ringed') {
+                        const osc2 = audioCtx.createOscillator();
+                        const gain2 = audioCtx.createGain();
+                        osc2.connect(gain2);
+                        gain2.connect(audioCtx.destination);
+                        osc2.frequency.value = planetEndFreq * 1.5;
+                        osc2.type = 'sine';
+                        gain2.gain.setValueAtTime(0.05, audioCtx.currentTime + 0.1);
+                        gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                        osc2.start(audioCtx.currentTime + 0.1);
+                        osc2.stop(audioCtx.currentTime + 0.4);
+                    }
                     break;
                 case 'system':
-                    // Epic warp sound for solar system travel
-                    oscillator.frequency.value = 100;
-                    oscillator.type = 'sawtooth';
+                    // System-specific epic warp sound
+                    const warpBase = 100 * sSound.freqMult;
+                    const warpEnd = 1200 * sSound.freqMult;
+                    oscillator.frequency.value = warpBase;
+                    oscillator.type = sSound.freqMult > 1.5 ? 'square' : 'sawtooth';
+                    oscillator.detune.value = sSound.detune;
                     gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.5);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                    oscillator.frequency.exponentialRampToValueAtTime(warpEnd, audioCtx.currentTime + 0.5 + sSound.reverb * 0.3);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5 + sSound.reverb * 0.3);
                     oscillator.start(audioCtx.currentTime);
-                    oscillator.stop(audioCtx.currentTime + 0.5);
-                    // Add second tone
-                    setTimeout(() => {
-                        if (audioCtx) {
-                            const osc2 = audioCtx.createOscillator();
-                            const gain2 = audioCtx.createGain();
-                            osc2.connect(gain2);
-                            gain2.connect(audioCtx.destination);
-                            osc2.frequency.value = 600;
-                            osc2.type = 'sine';
-                            gain2.gain.setValueAtTime(0.08, audioCtx.currentTime);
-                            gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                            osc2.start(audioCtx.currentTime);
-                            osc2.stop(audioCtx.currentTime + 0.3);
-                        }
-                    }, 200);
+                    oscillator.stop(audioCtx.currentTime + 0.5 + sSound.reverb * 0.3);
+                    // Add system-specific harmonics
+                    const numHarmonics = Math.ceil(sSound.reverb * 3) + 1;
+                    for (let i = 0; i < numHarmonics; i++) {
+                        setTimeout(() => {
+                            if (audioCtx) {
+                                const osc2 = audioCtx.createOscillator();
+                                const gain2 = audioCtx.createGain();
+                                osc2.connect(gain2);
+                                gain2.connect(audioCtx.destination);
+                                osc2.frequency.value = (400 + i * 200) * sSound.freqMult;
+                                osc2.type = 'sine';
+                                osc2.detune.value = sSound.detune + i * 50;
+                                gain2.gain.setValueAtTime(0.06, audioCtx.currentTime);
+                                gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                                osc2.start(audioCtx.currentTime);
+                                osc2.stop(audioCtx.currentTime + 0.3);
+                            }
+                        }, 150 + i * 100);
+                    }
                     break;
                 case 'destroy':
                     // Explosion/destruction sound
