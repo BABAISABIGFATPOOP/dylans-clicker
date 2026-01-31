@@ -590,28 +590,40 @@
         }
 
         .upgrades-scroll {
-            flex: 1;
+            flex: 0 0 150px;
             overflow-y: auto;
             margin-bottom: 10px;
             padding-right: 5px;
-            min-height: 200px;
         }
 
-        .other-shops-scroll {
+        .shop-section {
             flex: 1;
             overflow-y: auto;
             padding-right: 5px;
             border-top: 2px solid #444;
             padding-top: 10px;
+            min-height: 80px;
+        }
+
+        .shop-section.planets-section {
+            border-color: #ffd700;
+        }
+
+        .shop-section.toxic-section {
+            border-color: #39ff14;
+        }
+
+        .shop-section.systems-section {
+            border-color: #9b30ff;
         }
 
         .upgrades-scroll::-webkit-scrollbar,
-        .other-shops-scroll::-webkit-scrollbar {
+        .shop-section::-webkit-scrollbar {
             width: 8px;
         }
 
         .upgrades-scroll::-webkit-scrollbar-track,
-        .other-shops-scroll::-webkit-scrollbar-track {
+        .shop-section::-webkit-scrollbar-track {
             background: rgba(0, 0, 0, 0.3);
             border-radius: 4px;
         }
@@ -621,13 +633,23 @@
             border-radius: 4px;
         }
 
-        .other-shops-scroll::-webkit-scrollbar-thumb {
+        .planets-section::-webkit-scrollbar-thumb {
             background: #ffd700;
             border-radius: 4px;
         }
 
+        .toxic-section::-webkit-scrollbar-thumb {
+            background: #39ff14;
+            border-radius: 4px;
+        }
+
+        .systems-section::-webkit-scrollbar-thumb {
+            background: #9b30ff;
+            border-radius: 4px;
+        }
+
         .upgrades-scroll::-webkit-scrollbar-thumb:hover,
-        .other-shops-scroll::-webkit-scrollbar-thumb:hover {
+        .shop-section::-webkit-scrollbar-thumb:hover {
             background: #fff;
         }
 
@@ -940,11 +962,15 @@
             <div class="upgrades-scroll">
                 <div id="upgrades"></div>
             </div>
-            <div class="other-shops-scroll">
+            <div class="shop-section planets-section">
                 <div class="section-title">Unlock Planets</div>
                 <div id="planet-shop"></div>
+            </div>
+            <div class="shop-section toxic-section">
                 <div class="section-title" style="color: #39ff14; border-color: #39ff14;">☢️ Toxic Waste Upgrades</div>
                 <div id="toxic-shop"></div>
+            </div>
+            <div class="shop-section systems-section">
                 <div class="section-title" style="color: #9b30ff; border-color: #9b30ff;">⭐ Unlock Solar Systems</div>
                 <div id="system-shop"></div>
             </div>
