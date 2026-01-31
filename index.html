@@ -402,19 +402,19 @@
                 }
             },
             {
-                id: 'mars',
-                name: 'Mars',
-                icon: '🔴',
+                id: 'mercury',
+                name: 'Mercury',
+                icon: '🪨',
                 unlocked: false,
-                cost: 10000000,
-                multiplier: 2,
-                maxPollution: 5000000000000,
+                cost: 5000000,
+                multiplier: 1.5,
+                maxPollution: 2000000000000,
                 pollution: 0,
                 colors: {
-                    clean: 'radial-gradient(circle at 30% 30%, #c1440e, #8b3103 40%, #5c2102 70%, #2d1001)',
-                    mid: 'radial-gradient(circle at 30% 30%, #a33d0d, #7a2e0a 40%, #4d1d06 70%, #261003)',
-                    dirty: 'radial-gradient(circle at 30% 30%, #85360c, #632808 40%, #3e1905 70%, #1f0c02)',
-                    dead: 'radial-gradient(circle at 30% 30%, #4a3728, #3a2a1e 40%, #2a1e14 70%, #1a100a)'
+                    clean: 'radial-gradient(circle at 30% 30%, #9a9a9a, #7a7a7a 40%, #5a5a5a 70%, #3a3a3a)',
+                    mid: 'radial-gradient(circle at 30% 30%, #8a8a8a, #6a6a6a 40%, #4a4a4a 70%, #2a2a2a)',
+                    dirty: 'radial-gradient(circle at 30% 30%, #7a7a7a, #5a5a5a 40%, #3a3a3a 70%, #1a1a1a)',
+                    dead: 'radial-gradient(circle at 30% 30%, #4a4a4a, #3a3a3a 40%, #2a2a2a 70%, #1a1a1a)'
                 }
             },
             {
@@ -422,9 +422,9 @@
                 name: 'Venus',
                 icon: '🟡',
                 unlocked: false,
-                cost: 100000000,
-                multiplier: 5,
-                maxPollution: 25000000000000,
+                cost: 15000000,
+                multiplier: 3,
+                maxPollution: 8000000000000,
                 pollution: 0,
                 colors: {
                     clean: 'radial-gradient(circle at 30% 30%, #e6b800, #cc9900 40%, #997300 70%, #4d3a00)',
@@ -434,12 +434,44 @@
                 }
             },
             {
+                id: 'mars',
+                name: 'Mars',
+                icon: '🔴',
+                unlocked: false,
+                cost: 50000000,
+                multiplier: 5,
+                maxPollution: 15000000000000,
+                pollution: 0,
+                colors: {
+                    clean: 'radial-gradient(circle at 30% 30%, #c1440e, #8b3103 40%, #5c2102 70%, #2d1001)',
+                    mid: 'radial-gradient(circle at 30% 30%, #a33d0d, #7a2e0a 40%, #4d1d06 70%, #261003)',
+                    dirty: 'radial-gradient(circle at 30% 30%, #85360c, #632808 40%, #3e1905 70%, #1f0c02)',
+                    dead: 'radial-gradient(circle at 30% 30%, #4a3728, #3a2a1e 40%, #2a1e14 70%, #1a100a)'
+                }
+            },
+            {
+                id: 'ceres',
+                name: 'Ceres',
+                icon: '🌑',
+                unlocked: false,
+                cost: 200000000,
+                multiplier: 8,
+                maxPollution: 30000000000000,
+                pollution: 0,
+                colors: {
+                    clean: 'radial-gradient(circle at 30% 30%, #8c8c8c, #6e6e6e 40%, #505050 70%, #323232)',
+                    mid: 'radial-gradient(circle at 30% 30%, #7c7c7c, #5e5e5e 40%, #404040 70%, #222222)',
+                    dirty: 'radial-gradient(circle at 30% 30%, #6c6c6c, #4e4e4e 40%, #303030 70%, #121212)',
+                    dead: 'radial-gradient(circle at 30% 30%, #3c3c3c, #2e2e2e 40%, #202020 70%, #101010)'
+                }
+            },
+            {
                 id: 'jupiter',
                 name: 'Jupiter',
                 icon: '🟠',
                 unlocked: false,
                 cost: 1000000000,
-                multiplier: 10,
+                multiplier: 15,
                 maxPollution: 100000000000000,
                 pollution: 0,
                 colors: {
@@ -454,7 +486,7 @@
                 name: 'Saturn',
                 icon: '🪐',
                 unlocked: false,
-                cost: 50000000000,
+                cost: 10000000000,
                 multiplier: 25,
                 maxPollution: 500000000000000,
                 pollution: 0,
@@ -470,7 +502,7 @@
                 name: 'Neptune',
                 icon: '🔵',
                 unlocked: false,
-                cost: 500000000000,
+                cost: 100000000000,
                 multiplier: 50,
                 maxPollution: 2000000000000000,
                 pollution: 0,
@@ -486,15 +518,63 @@
                 name: 'Pluto',
                 icon: '⚫',
                 unlocked: false,
-                cost: 10000000000000,
-                multiplier: 100,
-                maxPollution: 10000000000000000,
+                cost: 500000000000,
+                multiplier: 75,
+                maxPollution: 5000000000000000,
                 pollution: 0,
                 colors: {
                     clean: 'radial-gradient(circle at 30% 30%, #a89f96, #8a827a 40%, #6c655e 70%, #3e3a36)',
                     mid: 'radial-gradient(circle at 30% 30%, #988f86, #7a726a 40%, #5c554e 70%, #2e2a26)',
                     dirty: 'radial-gradient(circle at 30% 30%, #887f76, #6a625a 40%, #4c453e 70%, #1e1a16)',
                     dead: 'radial-gradient(circle at 30% 30%, #4a4540, #3a3530 40%, #2a2520 70%, #1a1510)'
+                }
+            },
+            {
+                id: 'haumea',
+                name: 'Haumea',
+                icon: '🥚',
+                unlocked: false,
+                cost: 2000000000000,
+                multiplier: 100,
+                maxPollution: 10000000000000000,
+                pollution: 0,
+                colors: {
+                    clean: 'radial-gradient(circle at 30% 30%, #e8e8e8, #c8c8c8 40%, #a8a8a8 70%, #686868)',
+                    mid: 'radial-gradient(circle at 30% 30%, #d8d8d8, #b8b8b8 40%, #989898 70%, #585858)',
+                    dirty: 'radial-gradient(circle at 30% 30%, #c8c8c8, #a8a8a8 40%, #888888 70%, #484848)',
+                    dead: 'radial-gradient(circle at 30% 30%, #686868, #585858 40%, #484848 70%, #282828)'
+                }
+            },
+            {
+                id: 'eris',
+                name: 'Eris',
+                icon: '🌫️',
+                unlocked: false,
+                cost: 10000000000000,
+                multiplier: 150,
+                maxPollution: 50000000000000000,
+                pollution: 0,
+                colors: {
+                    clean: 'radial-gradient(circle at 30% 30%, #d4d4e0, #b4b4c8 40%, #9494b0 70%, #545478)',
+                    mid: 'radial-gradient(circle at 30% 30%, #c4c4d0, #a4a4b8 40%, #8484a0 70%, #444468)',
+                    dirty: 'radial-gradient(circle at 30% 30%, #b4b4c0, #9494a8 40%, #747490 70%, #343458)',
+                    dead: 'radial-gradient(circle at 30% 30%, #5a5a70, #4a4a60 40%, #3a3a50 70%, #2a2a40)'
+                }
+            },
+            {
+                id: 'sun',
+                name: 'The Sun',
+                icon: '☀️',
+                unlocked: false,
+                cost: 100000000000000,
+                multiplier: 500,
+                maxPollution: 1000000000000000000,
+                pollution: 0,
+                colors: {
+                    clean: 'radial-gradient(circle at 30% 30%, #ffdd00, #ffaa00 40%, #ff7700 70%, #cc4400)',
+                    mid: 'radial-gradient(circle at 30% 30%, #ffcc00, #ff9900 40%, #ff6600 70%, #bb3300)',
+                    dirty: 'radial-gradient(circle at 30% 30%, #ffbb00, #ff8800 40%, #ff5500 70%, #aa2200)',
+                    dead: 'radial-gradient(circle at 30% 30%, #aa4400, #882200 40%, #661100 70%, #440800)'
                 }
             }
         ];
