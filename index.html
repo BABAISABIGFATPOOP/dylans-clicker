@@ -1608,8 +1608,11 @@
             gainNode.connect(audioCtx.destination);
 
             // Get current planet and system sound profiles
-            const planet = planets[currentPlanetIndex];
             const system = solarSystems[currentSystemIndex];
+            const systemId = system ? system.id : 'sol';
+            const currentPlanets = systemPlanets[systemId] || systemPlanets.sol;
+            const planetIdx = currentPlanetPerSystem[systemId] || 0;
+            const planet = currentPlanets[planetIdx];
             const pSound = getPlanetSound(planet?.id);
             const sSound = systemSounds[system?.id] || systemSounds.sol;
 
@@ -2505,12 +2508,11 @@
         function switchPlanet(index) {
             const currentPlanets = getCurrentSystemPlanets();
             if (!currentPlanets[index].unlocked) return;
-            const system = solarSystems[currentSystemIndex];
+            const system = getCurrentSystem();
             const systemId = system ? system.id : 'sol';
             currentPlanetPerSystem[systemId] = index;
             playSound('planet');
             const planet = getCurrentPlanet();
-            const system = getCurrentSystem();
             planetNameDisplay.textContent = planet.name;
             currentPlanetNameDisplay.textContent = planet.name;
             const totalMult = planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * prestigeMultiplier;
@@ -3076,12 +3078,14 @@
                 return randomMsgs[Math.floor(Math.random() * randomMsgs.length)];
             }
 
-            // Check for planet-specific messages
-            for (const planet of planets) {
-                if (planet.unlocked && !planet.newsShown && planet.id !== 'earth') {
-                    planet.newsShown = true;
-                    if (storyMessages.planets[planet.id]) {
-                        return storyMessages.planets[planet.id];
+            // Check for planet-specific messages across all systems
+            for (const planetArray of Object.values(systemPlanets)) {
+                for (const planet of planetArray) {
+                    if (planet.unlocked && !planet.newsShown && planet.id !== 'earth') {
+                        planet.newsShown = true;
+                        if (storyMessages.planets[planet.id]) {
+                            return storyMessages.planets[planet.id];
+                        }
                     }
                 }
             }
