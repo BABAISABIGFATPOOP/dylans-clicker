@@ -2436,6 +2436,7 @@
                 const canAfford = pollution >= system.cost;
                 const div = document.createElement('div');
                 div.className = 'toxic-upgrade' + (!canAfford && !system.unlocked ? ' disabled' : '') + (system.unlocked ? ' owned' : '');
+                div.setAttribute('data-system-index', index);
                 div.style.borderColor = system.unlocked ? '#9b30ff' : '';
                 div.innerHTML = `
                     <div class="name" style="color: #9b30ff;">${system.icon} ${system.name}</div>
@@ -2443,12 +2444,19 @@
                     <div class="desc">x${formatNumber(system.multiplier)} system multiplier</div>
                     <div class="cost" style="color: #9b30ff;">${system.unlocked ? 'UNLOCKED' : 'Cost: ' + formatNumber(system.cost) + ' tons'}</div>
                 `;
-                if (!system.unlocked && canAfford) {
-                    div.addEventListener('click', () => buySystem(index));
-                }
                 systemShop.appendChild(div);
             });
         }
+
+        systemShop.addEventListener('click', (e) => {
+            const item = e.target.closest('.toxic-upgrade');
+            if (item && !item.classList.contains('owned')) {
+                const index = parseInt(item.getAttribute('data-system-index'));
+                if (!isNaN(index)) {
+                    buySystem(index);
+                }
+            }
+        });
 
         function buySystem(index) {
             const system = solarSystems[index];
@@ -2785,6 +2793,7 @@
             updatePlanetAppearance();
             updateUpgradeStates();
             updatePlanetShopStates();
+            updateSystemShopStates();
         }
 
         function updateUpgradeStates() {
@@ -2805,6 +2814,17 @@
                 const index = parseInt(item.getAttribute('data-planet-index'));
                 if (!isNaN(index) && currentPlanets[index] && !currentPlanets[index].unlocked) {
                     const canAfford = pollution >= currentPlanets[index].cost;
+                    item.classList.toggle('disabled', !canAfford);
+                }
+            });
+        }
+
+        function updateSystemShopStates() {
+            const items = systemShop.querySelectorAll('.toxic-upgrade');
+            items.forEach((item) => {
+                const index = parseInt(item.getAttribute('data-system-index'));
+                if (!isNaN(index) && solarSystems[index] && !solarSystems[index].unlocked) {
+                    const canAfford = pollution >= solarSystems[index].cost;
                     item.classList.toggle('disabled', !canAfford);
                 }
             });
