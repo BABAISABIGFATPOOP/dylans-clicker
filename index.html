@@ -357,6 +357,7 @@
 
         // Upgrades
         const upgrades = [
+            // CLICK UPGRADES
             {
                 id: 'car',
                 name: 'Old Car',
@@ -368,11 +369,62 @@
                 power: 1
             },
             {
+                id: 'truck',
+                name: 'Diesel Truck',
+                icon: '🚛',
+                desc: '+5 tons per click',
+                baseCost: 100,
+                owned: 0,
+                type: 'click',
+                power: 5
+            },
+            {
+                id: 'nuke',
+                name: 'Nuclear Plant',
+                icon: '☢️',
+                desc: '+25 tons per click',
+                baseCost: 750,
+                owned: 0,
+                type: 'click',
+                power: 25
+            },
+            {
+                id: 'rocket',
+                name: 'Rocket Launch',
+                icon: '🚀',
+                desc: '+100 tons per click',
+                baseCost: 5000,
+                owned: 0,
+                type: 'click',
+                power: 100
+            },
+            {
+                id: 'volcano',
+                name: 'Volcano Drill',
+                icon: '🌋',
+                desc: '+500 tons per click',
+                baseCost: 50000,
+                owned: 0,
+                type: 'click',
+                power: 500
+            },
+            {
+                id: 'asteroid',
+                name: 'Asteroid Mining',
+                icon: '☄️',
+                desc: '+2,500 tons per click',
+                baseCost: 500000,
+                owned: 0,
+                type: 'click',
+                power: 2500
+            },
+            // AUTO UPGRADES
+            {
                 id: 'factory',
                 name: 'Coal Factory',
                 icon: '🏭',
                 desc: 'Emits 2 tons per second',
-                baseCost: 100,
+                baseCost: 50,
                 owned: 0,
                 type: 'auto',
                 power: 2
@@ -382,7 +434,7 @@
                 name: 'Airplane Fleet',
                 icon: '✈️',
                 desc: 'Emits 10 tons per second',
-                baseCost: 500,
+                baseCost: 300,
                 owned: 0,
                 type: 'auto',
                 power: 10
@@ -392,17 +444,17 @@
                 name: 'Oil Tanker',
                 icon: '🛢️',
                 desc: 'Spills 50 tons per second',
-                baseCost: 2500,
+                baseCost: 1500,
                 owned: 0,
                 type: 'auto',
                 power: 50
             },
             {
                 id: 'powerplant',
-                name: 'Power Plant',
+                name: 'Coal Power Plant',
                 icon: '⚡',
                 desc: 'Burns 200 tons per second',
-                baseCost: 15000,
+                baseCost: 8000,
                 owned: 0,
                 type: 'auto',
                 power: 200
@@ -412,7 +464,7 @@
                 name: 'Deforestation Co.',
                 icon: '🪓',
                 desc: 'Releases 800 tons per second',
-                baseCost: 75000,
+                baseCost: 40000,
                 owned: 0,
                 type: 'auto',
                 power: 800
@@ -422,7 +474,7 @@
                 name: 'Offshore Oil Rig',
                 icon: '🛢️',
                 desc: 'Pumps 3,000 tons per second',
-                baseCost: 400000,
+                baseCost: 200000,
                 owned: 0,
                 type: 'auto',
                 power: 3000
@@ -432,10 +484,30 @@
                 name: 'Mega Corporation',
                 icon: '🏢',
                 desc: 'Pollutes 15,000 tons per second',
-                baseCost: 2500000,
+                baseCost: 1000000,
                 owned: 0,
                 type: 'auto',
                 power: 15000
+            },
+            {
+                id: 'government',
+                name: 'Corrupt Government',
+                icon: '🏛️',
+                desc: 'Ignores 75,000 tons per second',
+                baseCost: 5000000,
+                owned: 0,
+                type: 'auto',
+                power: 75000
+            },
+            {
+                id: 'dystopia',
+                name: 'Dystopian Future',
+                icon: '💀',
+                desc: 'Destroys 500,000 tons per second',
+                baseCost: 50000000,
+                owned: 0,
+                type: 'auto',
+                power: 500000
             }
         ];
 
