@@ -33,9 +33,51 @@
             padding: 20px;
         }
 
+        .planet-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .planet-tab {
+            padding: 8px 16px;
+            border: 2px solid #444;
+            border-radius: 20px;
+            background: rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .planet-tab:hover:not(.locked) {
+            border-color: #888;
+        }
+
+        .planet-tab.active {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        .planet-tab.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .planet-tab .planet-emoji {
+            margin-right: 5px;
+        }
+
         .score-display {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
+        }
+
+        .planet-name {
+            font-size: 1.2rem;
+            color: #888;
+            margin-bottom: 5px;
         }
 
         .score {
@@ -56,6 +98,12 @@
             margin-top: 10px;
         }
 
+        .multiplier {
+            font-size: 1rem;
+            color: #ffd700;
+            margin-top: 5px;
+        }
+
         .globe-container {
             position: relative;
             width: 280px;
@@ -67,14 +115,13 @@
             height: 250px;
             border-radius: 50%;
             border: none;
-            background: radial-gradient(circle at 30% 30%, #4a90d9, #1e5799 40%, #0d3a6e 70%, #082040);
             cursor: pointer;
             position: relative;
             box-shadow:
                 0 0 60px rgba(30, 87, 153, 0.4),
                 inset -20px -20px 40px rgba(0, 0, 0, 0.4),
                 inset 10px 10px 40px rgba(255, 255, 255, 0.1);
-            transition: transform 0.1s, filter 0.3s;
+            transition: transform 0.1s, filter 0.3s, background 0.5s;
             overflow: hidden;
         }
 
@@ -84,39 +131,6 @@
 
         .globe-btn:active {
             transform: scale(0.95);
-        }
-
-        /* Continents */
-        .globe-btn::before {
-            content: '';
-            position: absolute;
-            top: 15%;
-            left: 20%;
-            width: 80px;
-            height: 50px;
-            background: #3d8b40;
-            border-radius: 40% 60% 50% 40%;
-            box-shadow:
-                60px 30px 0 20px #3d8b40,
-                -10px 80px 0 15px #3d8b40,
-                70px 90px 0 25px #3d8b40,
-                30px 120px 0 10px #3d8b40;
-            transition: background 0.5s, box-shadow 0.5s;
-        }
-
-        /* Clouds/atmosphere */
-        .globe-btn::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border-radius: 50%;
-            background:
-                radial-gradient(ellipse at 20% 20%, rgba(255,255,255,0.3) 0%, transparent 30%),
-                radial-gradient(ellipse at 70% 60%, rgba(255,255,255,0.15) 0%, transparent 25%);
-            pointer-events: none;
         }
 
         .smog-layer {
@@ -157,7 +171,15 @@
             padding-bottom: 10px;
         }
 
-        .upgrade-item {
+        .section-title {
+            font-size: 1.1rem;
+            color: #ffd700;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ffd700;
+        }
+
+        .upgrade-item, .planet-item {
             background: linear-gradient(135deg, #2a2a3a 0%, #1a1a2a 100%);
             border: 2px solid #444;
             border-radius: 10px;
@@ -167,29 +189,33 @@
             transition: all 0.2s;
         }
 
-        .upgrade-item:hover:not(.disabled) {
+        .upgrade-item:hover:not(.disabled), .planet-item:hover:not(.disabled):not(.owned) {
             border-color: #ff6b6b;
-            transform: translateX(-5px);
         }
 
-        .upgrade-item.disabled {
+        .upgrade-item.disabled, .planet-item.disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
 
-        .upgrade-header {
+        .planet-item.owned {
+            border-color: #4ade80;
+            opacity: 0.7;
+        }
+
+        .upgrade-header, .planet-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 8px;
         }
 
-        .upgrade-name {
+        .upgrade-name, .planet-unlock-name {
             font-size: 1.1rem;
             font-weight: bold;
         }
 
-        .upgrade-icon {
+        .upgrade-icon, .planet-unlock-icon {
             font-size: 1.3rem;
             margin-right: 8px;
         }
@@ -202,15 +228,19 @@
             font-weight: bold;
         }
 
-        .upgrade-desc {
+        .upgrade-desc, .planet-desc {
             font-size: 0.85rem;
             color: #aaa;
             margin-bottom: 8px;
         }
 
-        .upgrade-cost {
+        .upgrade-cost, .planet-cost {
             color: #ff6b6b;
             font-weight: bold;
+        }
+
+        .planet-item.owned .planet-cost {
+            color: #4ade80;
         }
 
         .click-particle {
@@ -321,224 +351,186 @@
 <body>
     <div class="game-container">
         <div class="main-area">
+            <div class="planet-selector" id="planet-tabs"></div>
             <div class="score-display">
+                <div class="planet-name" id="planet-name">Earth</div>
                 <div class="score" id="score-text"><span id="pollution">0</span> tons of CO2</div>
                 <div class="per-second">polluting at: <span id="pps">0</span>/sec</div>
+                <div class="multiplier" id="multiplier-display">Multiplier: x1</div>
             </div>
             <div class="globe-container">
-                <button class="globe-btn" id="globe" title="Pollute the Earth!"></button>
+                <button class="globe-btn" id="globe" title="Pollute!"></button>
                 <div class="smog-layer" id="smog"></div>
                 <div class="pollution-particles" id="particles"></div>
             </div>
             <div class="pollution-bar">
                 <div class="pollution-fill" id="pollution-fill" style="width: 0%"></div>
             </div>
-            <div class="pollution-label">World Pollution Level: <span id="pollution-percent">0</span>%</div>
+            <div class="pollution-label"><span id="current-planet-name">Earth</span> Pollution: <span id="pollution-percent">0</span>%</div>
         </div>
         <div class="shop-panel">
             <h2 class="shop-title">Pollution Sources</h2>
             <div id="upgrades"></div>
+            <div class="section-title">Unlock Planets</div>
+            <div id="planet-shop"></div>
         </div>
     </div>
     <div class="stats">
         <div>Pollution Power: <span id="click-power">1</span> tons/click</div>
         <div>Total Clicks: <span id="total-clicks">0</span></div>
         <div>Total Pollution: <span id="total-pollution">0</span> tons</div>
+        <div>Planets Destroyed: <span id="planets-destroyed">0</span></div>
     </div>
 
     <script>
+        // Planets
+        const planets = [
+            {
+                id: 'earth',
+                name: 'Earth',
+                icon: '🌍',
+                unlocked: true,
+                cost: 0,
+                multiplier: 1,
+                maxPollution: 1000000000000,
+                pollution: 0,
+                colors: {
+                    clean: 'radial-gradient(circle at 30% 30%, #4a90d9, #1e5799 40%, #0d3a6e 70%, #082040)',
+                    mid: 'radial-gradient(circle at 30% 30%, #5a9aca, #2a6a99 40%, #1a4a70 70%, #0a2a40)',
+                    dirty: 'radial-gradient(circle at 30% 30%, #6a8b9a, #3d5c6e 40%, #2a4050 70%, #152030)',
+                    dead: 'radial-gradient(circle at 30% 30%, #8b7355, #5c4a3a 40%, #3d3028 70%, #1a1510)'
+                }
+            },
+            {
+                id: 'mars',
+                name: 'Mars',
+                icon: '🔴',
+                unlocked: false,
+                cost: 10000000,
+                multiplier: 2,
+                maxPollution: 5000000000000,
+                pollution: 0,
+                colors: {
+                    clean: 'radial-gradient(circle at 30% 30%, #c1440e, #8b3103 40%, #5c2102 70%, #2d1001)',
+                    mid: 'radial-gradient(circle at 30% 30%, #a33d0d, #7a2e0a 40%, #4d1d06 70%, #261003)',
+                    dirty: 'radial-gradient(circle at 30% 30%, #85360c, #632808 40%, #3e1905 70%, #1f0c02)',
+                    dead: 'radial-gradient(circle at 30% 30%, #4a3728, #3a2a1e 40%, #2a1e14 70%, #1a100a)'
+                }
+            },
+            {
+                id: 'venus',
+                name: 'Venus',
+                icon: '🟡',
+                unlocked: false,
+                cost: 100000000,
+                multiplier: 5,
+                maxPollution: 25000000000000,
+                pollution: 0,
+                colors: {
+                    clean: 'radial-gradient(circle at 30% 30%, #e6b800, #cc9900 40%, #997300 70%, #4d3a00)',
+                    mid: 'radial-gradient(circle at 30% 30%, #cca300, #b38600 40%, #806000 70%, #403000)',
+                    dirty: 'radial-gradient(circle at 30% 30%, #b38f00, #997a00 40%, #665200 70%, #332900)',
+                    dead: 'radial-gradient(circle at 30% 30%, #6b5a28, #5a4a20 40%, #4a3a18 70%, #2a2010)'
+                }
+            },
+            {
+                id: 'jupiter',
+                name: 'Jupiter',
+                icon: '🟠',
+                unlocked: false,
+                cost: 1000000000,
+                multiplier: 10,
+                maxPollution: 100000000000000,
+                pollution: 0,
+                colors: {
+                    clean: 'radial-gradient(circle at 30% 30%, #d4a574, #c98b4a 40%, #a86e30 70%, #5c3d1a)',
+                    mid: 'radial-gradient(circle at 30% 30%, #c49464, #b87a3a 40%, #985e20 70%, #4c2f10)',
+                    dirty: 'radial-gradient(circle at 30% 30%, #b48354, #a86a2a 40%, #884e10 70%, #3c2100)',
+                    dead: 'radial-gradient(circle at 30% 30%, #5a4a38, #4a3a28 40%, #3a2a18 70%, #2a1a08)'
+                }
+            },
+            {
+                id: 'saturn',
+                name: 'Saturn',
+                icon: '🪐',
+                unlocked: false,
+                cost: 50000000000,
+                multiplier: 25,
+                maxPollution: 500000000000000,
+                pollution: 0,
+                colors: {
+                    clean: 'radial-gradient(circle at 30% 30%, #e8d5a3, #d4bc7a 40%, #b89a50 70%, #6b5a30)',
+                    mid: 'radial-gradient(circle at 30% 30%, #d8c593, #c4ac6a 40%, #a88a40 70%, #5b4a20)',
+                    dirty: 'radial-gradient(circle at 30% 30%, #c8b583, #b49c5a 40%, #987a30 70%, #4b3a10)',
+                    dead: 'radial-gradient(circle at 30% 30%, #6a5a40, #5a4a30 40%, #4a3a20 70%, #2a2010)'
+                }
+            },
+            {
+                id: 'neptune',
+                name: 'Neptune',
+                icon: '🔵',
+                unlocked: false,
+                cost: 500000000000,
+                multiplier: 50,
+                maxPollution: 2000000000000000,
+                pollution: 0,
+                colors: {
+                    clean: 'radial-gradient(circle at 30% 30%, #4169e1, #3158c4 40%, #2147a7 70%, #112a6b)',
+                    mid: 'radial-gradient(circle at 30% 30%, #3159d1, #2148b4 40%, #113797 70%, #011a5b)',
+                    dirty: 'radial-gradient(circle at 30% 30%, #2149c1, #1138a4 40%, #012787 70%, #010a4b)',
+                    dead: 'radial-gradient(circle at 30% 30%, #3a3a5a, #2a2a4a 40%, #1a1a3a 70%, #0a0a2a)'
+                }
+            },
+            {
+                id: 'pluto',
+                name: 'Pluto',
+                icon: '⚫',
+                unlocked: false,
+                cost: 10000000000000,
+                multiplier: 100,
+                maxPollution: 10000000000000000,
+                pollution: 0,
+                colors: {
+                    clean: 'radial-gradient(circle at 30% 30%, #a89f96, #8a827a 40%, #6c655e 70%, #3e3a36)',
+                    mid: 'radial-gradient(circle at 30% 30%, #988f86, #7a726a 40%, #5c554e 70%, #2e2a26)',
+                    dirty: 'radial-gradient(circle at 30% 30%, #887f76, #6a625a 40%, #4c453e 70%, #1e1a16)',
+                    dead: 'radial-gradient(circle at 30% 30%, #4a4540, #3a3530 40%, #2a2520 70%, #1a1510)'
+                }
+            }
+        ];
+
+        let currentPlanetIndex = 0;
+        let planetsDestroyed = 0;
+
         // Game State
         let pollution = 0;
         let pollutionPerClick = 1;
         let pollutionPerSecond = 0;
         let totalClicks = 0;
         let totalPollution = 0;
-        const maxPollution = 1000000000000; // 1 trillion for 100%
 
         // Upgrades
         const upgrades = [
             // CLICK UPGRADES
-            {
-                id: 'car',
-                name: 'Old Car',
-                icon: '🚗',
-                desc: '+1 ton per click',
-                baseCost: 15,
-                owned: 0,
-                type: 'click',
-                power: 1
-            },
-            {
-                id: 'truck',
-                name: 'Diesel Truck',
-                icon: '🚛',
-                desc: '+5 tons per click',
-                baseCost: 100,
-                owned: 0,
-                type: 'click',
-                power: 5
-            },
-            {
-                id: 'nuke',
-                name: 'Nuclear Plant',
-                icon: '☢️',
-                desc: '+25 tons per click',
-                baseCost: 750,
-                owned: 0,
-                type: 'click',
-                power: 25
-            },
-            {
-                id: 'rocket',
-                name: 'Rocket Launch',
-                icon: '🚀',
-                desc: '+100 tons per click',
-                baseCost: 5000,
-                owned: 0,
-                type: 'click',
-                power: 100
-            },
-            {
-                id: 'chemical',
-                name: 'Chemical Spill',
-                icon: '🧪',
-                desc: '+200 tons per click',
-                baseCost: 12000,
-                owned: 0,
-                type: 'click',
-                power: 200
-            },
-            {
-                id: 'volcano',
-                name: 'Volcano Drill',
-                icon: '🌋',
-                desc: '+500 tons per click',
-                baseCost: 35000,
-                owned: 0,
-                type: 'click',
-                power: 500
-            },
-            {
-                id: 'nuke_test',
-                name: 'Nuclear Test',
-                icon: '💥',
-                desc: '+1,000 tons per click',
-                baseCost: 100000,
-                owned: 0,
-                type: 'click',
-                power: 1000
-            },
-            {
-                id: 'asteroid',
-                name: 'Asteroid Mining',
-                icon: '☄️',
-                desc: '+2,500 tons per click',
-                baseCost: 300000,
-                owned: 0,
-                type: 'click',
-                power: 2500
-            },
-            {
-                id: 'blackhole',
-                name: 'Black Hole Generator',
-                icon: '🕳️',
-                desc: '+10,000 tons per click',
-                baseCost: 2000000,
-                owned: 0,
-                type: 'click',
-                power: 10000
-            },
+            { id: 'car', name: 'Old Car', icon: '🚗', desc: '+1 ton per click', baseCost: 15, owned: 0, type: 'click', power: 1 },
+            { id: 'truck', name: 'Diesel Truck', icon: '🚛', desc: '+5 tons per click', baseCost: 100, owned: 0, type: 'click', power: 5 },
+            { id: 'nuke', name: 'Nuclear Plant', icon: '☢️', desc: '+25 tons per click', baseCost: 750, owned: 0, type: 'click', power: 25 },
+            { id: 'rocket', name: 'Rocket Launch', icon: '🚀', desc: '+100 tons per click', baseCost: 5000, owned: 0, type: 'click', power: 100 },
+            { id: 'chemical', name: 'Chemical Spill', icon: '🧪', desc: '+200 tons per click', baseCost: 12000, owned: 0, type: 'click', power: 200 },
+            { id: 'volcano', name: 'Volcano Drill', icon: '🌋', desc: '+500 tons per click', baseCost: 35000, owned: 0, type: 'click', power: 500 },
+            { id: 'nuke_test', name: 'Nuclear Test', icon: '💥', desc: '+1,000 tons per click', baseCost: 100000, owned: 0, type: 'click', power: 1000 },
+            { id: 'asteroid', name: 'Asteroid Mining', icon: '☄️', desc: '+2,500 tons per click', baseCost: 300000, owned: 0, type: 'click', power: 2500 },
+            { id: 'blackhole', name: 'Black Hole Generator', icon: '🕳️', desc: '+10,000 tons per click', baseCost: 2000000, owned: 0, type: 'click', power: 10000 },
             // AUTO UPGRADES
-            {
-                id: 'factory',
-                name: 'Coal Factory',
-                icon: '🏭',
-                desc: 'Emits 2 tons per second',
-                baseCost: 50,
-                owned: 0,
-                type: 'auto',
-                power: 2
-            },
-            {
-                id: 'plane',
-                name: 'Airplane Fleet',
-                icon: '✈️',
-                desc: 'Emits 10 tons per second',
-                baseCost: 300,
-                owned: 0,
-                type: 'auto',
-                power: 10
-            },
-            {
-                id: 'tanker',
-                name: 'Oil Tanker',
-                icon: '🛢️',
-                desc: 'Spills 50 tons per second',
-                baseCost: 1500,
-                owned: 0,
-                type: 'auto',
-                power: 50
-            },
-            {
-                id: 'powerplant',
-                name: 'Coal Power Plant',
-                icon: '⚡',
-                desc: 'Burns 200 tons per second',
-                baseCost: 8000,
-                owned: 0,
-                type: 'auto',
-                power: 200
-            },
-            {
-                id: 'deforest',
-                name: 'Deforestation Co.',
-                icon: '🪓',
-                desc: 'Releases 800 tons per second',
-                baseCost: 40000,
-                owned: 0,
-                type: 'auto',
-                power: 800
-            },
-            {
-                id: 'oilrig',
-                name: 'Offshore Oil Rig',
-                icon: '🛢️',
-                desc: 'Pumps 3,000 tons per second',
-                baseCost: 200000,
-                owned: 0,
-                type: 'auto',
-                power: 3000
-            },
-            {
-                id: 'megacorp',
-                name: 'Mega Corporation',
-                icon: '🏢',
-                desc: 'Pollutes 15,000 tons per second',
-                baseCost: 1000000,
-                owned: 0,
-                type: 'auto',
-                power: 15000
-            },
-            {
-                id: 'government',
-                name: 'Corrupt Government',
-                icon: '🏛️',
-                desc: 'Ignores 75,000 tons per second',
-                baseCost: 5000000,
-                owned: 0,
-                type: 'auto',
-                power: 75000
-            },
-            {
-                id: 'dystopia',
-                name: 'Dystopian Future',
-                icon: '💀',
-                desc: 'Destroys 500,000 tons per second',
-                baseCost: 50000000,
-                owned: 0,
-                type: 'auto',
-                power: 500000
-            }
+            { id: 'factory', name: 'Coal Factory', icon: '🏭', desc: 'Emits 2 tons per second', baseCost: 50, owned: 0, type: 'auto', power: 2 },
+            { id: 'plane', name: 'Airplane Fleet', icon: '✈️', desc: 'Emits 10 tons per second', baseCost: 300, owned: 0, type: 'auto', power: 10 },
+            { id: 'tanker', name: 'Oil Tanker', icon: '🛢️', desc: 'Spills 50 tons per second', baseCost: 1500, owned: 0, type: 'auto', power: 50 },
+            { id: 'powerplant', name: 'Coal Power Plant', icon: '⚡', desc: 'Burns 200 tons per second', baseCost: 8000, owned: 0, type: 'auto', power: 200 },
+            { id: 'deforest', name: 'Deforestation Co.', icon: '🪓', desc: 'Releases 800 tons per second', baseCost: 40000, owned: 0, type: 'auto', power: 800 },
+            { id: 'oilrig', name: 'Offshore Oil Rig', icon: '🛢️', desc: 'Pumps 3,000 tons per second', baseCost: 200000, owned: 0, type: 'auto', power: 3000 },
+            { id: 'megacorp', name: 'Mega Corporation', icon: '🏢', desc: 'Pollutes 15,000 tons per second', baseCost: 1000000, owned: 0, type: 'auto', power: 15000 },
+            { id: 'government', name: 'Corrupt Government', icon: '🏛️', desc: 'Ignores 75,000 tons per second', baseCost: 5000000, owned: 0, type: 'auto', power: 75000 },
+            { id: 'dystopia', name: 'Dystopian Future', icon: '💀', desc: 'Destroys 500,000 tons per second', baseCost: 50000000, owned: 0, type: 'auto', power: 500000 }
         ];
 
         // DOM Elements
@@ -548,20 +540,29 @@
         const pollutionDisplay = document.getElementById('pollution');
         const ppsDisplay = document.getElementById('pps');
         const upgradesContainer = document.getElementById('upgrades');
+        const planetShop = document.getElementById('planet-shop');
+        const planetTabs = document.getElementById('planet-tabs');
         const clickPowerDisplay = document.getElementById('click-power');
         const totalClicksDisplay = document.getElementById('total-clicks');
         const totalPollutionDisplay = document.getElementById('total-pollution');
         const pollutionFill = document.getElementById('pollution-fill');
         const pollutionPercent = document.getElementById('pollution-percent');
         const scoreText = document.getElementById('score-text');
+        const planetNameDisplay = document.getElementById('planet-name');
+        const currentPlanetNameDisplay = document.getElementById('current-planet-name');
+        const multiplierDisplay = document.getElementById('multiplier-display');
+        const planetsDestroyedDisplay = document.getElementById('planets-destroyed');
 
-        // Calculate upgrade cost
+        function getCurrentPlanet() {
+            return planets[currentPlanetIndex];
+        }
+
         function getCost(upgrade) {
             return Math.floor(upgrade.baseCost * Math.pow(1.15, upgrade.owned));
         }
 
-        // Format large numbers
         function formatNumber(num) {
+            if (num >= 1e15) return (num / 1e15).toFixed(2) + 'Q';
             if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
             if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
             if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
@@ -569,9 +570,9 @@
             return Math.floor(num).toString();
         }
 
-        // Update globe appearance based on pollution
-        function updateGlobeAppearance() {
-            const percent = Math.min((totalPollution / maxPollution) * 100, 100);
+        function updatePlanetAppearance() {
+            const planet = getCurrentPlanet();
+            const percent = Math.min((planet.pollution / planet.maxPollution) * 100, 100);
             const smogOpacity = Math.min(percent / 100, 0.7);
 
             smogLayer.style.background = `radial-gradient(circle,
@@ -579,17 +580,24 @@
                 rgba(80, 60, 30, ${smogOpacity}) 50%,
                 rgba(50, 40, 20, ${smogOpacity * 0.8}) 100%)`;
 
-            // Change globe colors as pollution increases
             if (percent > 75) {
-                globeBtn.style.background = `radial-gradient(circle at 30% 30%, #8b7355, #5c4a3a 40%, #3d3028 70%, #1a1510)`;
+                globeBtn.style.background = planet.colors.dead;
             } else if (percent > 50) {
-                globeBtn.style.background = `radial-gradient(circle at 30% 30%, #6a8b9a, #3d5c6e 40%, #2a4050 70%, #152030)`;
+                globeBtn.style.background = planet.colors.dirty;
             } else if (percent > 25) {
-                globeBtn.style.background = `radial-gradient(circle at 30% 30%, #5a9aca, #2a6a99 40%, #1a4a70 70%, #0a2a40)`;
+                globeBtn.style.background = planet.colors.mid;
+            } else {
+                globeBtn.style.background = planet.colors.clean;
             }
 
             pollutionFill.style.width = percent + '%';
             pollutionPercent.textContent = percent.toFixed(2);
+
+            if (percent >= 100 && !planet.destroyed) {
+                planet.destroyed = true;
+                planetsDestroyed++;
+                planetsDestroyedDisplay.textContent = planetsDestroyed;
+            }
 
             if (percent > 50) {
                 scoreText.classList.add('polluted');
@@ -598,7 +606,72 @@
             }
         }
 
-        // Create click particle effect
+        function renderPlanetTabs() {
+            planetTabs.innerHTML = '';
+            planets.forEach((planet, index) => {
+                const tab = document.createElement('div');
+                tab.className = 'planet-tab' + (index === currentPlanetIndex ? ' active' : '') + (!planet.unlocked ? ' locked' : '');
+                tab.innerHTML = `<span class="planet-emoji">${planet.icon}</span>${planet.name}`;
+                if (planet.unlocked) {
+                    tab.addEventListener('click', () => switchPlanet(index));
+                }
+                planetTabs.appendChild(tab);
+            });
+        }
+
+        function switchPlanet(index) {
+            if (!planets[index].unlocked) return;
+            currentPlanetIndex = index;
+            const planet = getCurrentPlanet();
+            planetNameDisplay.textContent = planet.name;
+            currentPlanetNameDisplay.textContent = planet.name;
+            multiplierDisplay.textContent = `Multiplier: x${planet.multiplier}`;
+            renderPlanetTabs();
+            updatePlanetAppearance();
+            updateDisplay();
+        }
+
+        function renderPlanetShop() {
+            planetShop.innerHTML = '';
+            planets.forEach((planet, index) => {
+                if (index === 0) return; // Skip Earth
+                const canAfford = pollution >= planet.cost;
+                const div = document.createElement('div');
+                div.className = 'planet-item' + (!canAfford && !planet.unlocked ? ' disabled' : '') + (planet.unlocked ? ' owned' : '');
+                div.setAttribute('data-planet-index', index);
+                div.innerHTML = `
+                    <div class="planet-header">
+                        <span><span class="planet-unlock-icon">${planet.icon}</span><span class="planet-unlock-name">${planet.name}</span></span>
+                    </div>
+                    <div class="planet-desc">x${planet.multiplier} pollution multiplier</div>
+                    <div class="planet-cost">${planet.unlocked ? 'UNLOCKED' : 'Cost: ' + formatNumber(planet.cost) + ' tons'}</div>
+                `;
+                planetShop.appendChild(div);
+            });
+        }
+
+        planetShop.addEventListener('click', (e) => {
+            const item = e.target.closest('.planet-item');
+            if (item && !item.classList.contains('disabled') && !item.classList.contains('owned')) {
+                const index = parseInt(item.getAttribute('data-planet-index'));
+                if (!isNaN(index) && planets[index] && !planets[index].unlocked) {
+                    buyPlanet(index);
+                }
+            }
+        });
+
+        function buyPlanet(index) {
+            const planet = planets[index];
+            if (pollution >= planet.cost && !planet.unlocked) {
+                pollution -= planet.cost;
+                planet.unlocked = true;
+                renderPlanetTabs();
+                renderPlanetShop();
+                updateDisplay();
+                saveGame();
+            }
+        }
+
         function createParticle(x, y, amount) {
             const particle = document.createElement('div');
             particle.className = 'click-particle';
@@ -609,7 +682,6 @@
             setTimeout(() => particle.remove(), 1000);
         }
 
-        // Create smoke particle
         function createSmoke() {
             const smoke = document.createElement('div');
             smoke.className = 'smoke-particle';
@@ -619,18 +691,18 @@
             setTimeout(() => smoke.remove(), 2000);
         }
 
-        // Update display (without re-rendering upgrades)
         function updateDisplay() {
+            const planet = getCurrentPlanet();
             pollutionDisplay.textContent = formatNumber(pollution);
-            ppsDisplay.textContent = formatNumber(pollutionPerSecond);
-            clickPowerDisplay.textContent = formatNumber(pollutionPerClick);
+            ppsDisplay.textContent = formatNumber(pollutionPerSecond * planet.multiplier);
+            clickPowerDisplay.textContent = formatNumber(pollutionPerClick * planet.multiplier);
             totalClicksDisplay.textContent = formatNumber(totalClicks);
             totalPollutionDisplay.textContent = formatNumber(totalPollution);
-            updateGlobeAppearance();
+            updatePlanetAppearance();
             updateUpgradeStates();
+            updatePlanetShopStates();
         }
 
-        // Update upgrade enabled/disabled states without full re-render
         function updateUpgradeStates() {
             const items = upgradesContainer.querySelectorAll('.upgrade-item');
             items.forEach((item, index) => {
@@ -642,13 +714,22 @@
             });
         }
 
-        // Render upgrades
+        function updatePlanetShopStates() {
+            const items = planetShop.querySelectorAll('.planet-item');
+            items.forEach((item) => {
+                const index = parseInt(item.getAttribute('data-planet-index'));
+                if (!isNaN(index) && planets[index] && !planets[index].unlocked) {
+                    const canAfford = pollution >= planets[index].cost;
+                    item.classList.toggle('disabled', !canAfford);
+                }
+            });
+        }
+
         function renderUpgrades() {
             upgradesContainer.innerHTML = '';
             upgrades.forEach((upgrade, index) => {
                 const cost = getCost(upgrade);
                 const canAfford = pollution >= cost;
-
                 const div = document.createElement('div');
                 div.className = 'upgrade-item' + (canAfford ? '' : ' disabled');
                 div.setAttribute('data-index', index);
@@ -664,7 +745,6 @@
             });
         }
 
-        // Handle upgrade clicks using event delegation
         upgradesContainer.addEventListener('click', (e) => {
             const item = e.target.closest('.upgrade-item');
             if (item && !item.classList.contains('disabled')) {
@@ -675,37 +755,35 @@
             }
         });
 
-        // Buy upgrade
         function buyUpgrade(upgrade) {
             const cost = getCost(upgrade);
             if (pollution >= cost) {
                 pollution -= cost;
                 upgrade.owned++;
-
                 if (upgrade.type === 'click') {
                     pollutionPerClick += upgrade.power;
                 } else if (upgrade.type === 'auto') {
                     pollutionPerSecond += upgrade.power;
                 }
-
                 renderUpgrades();
                 updateDisplay();
                 saveGame();
             }
         }
 
-        // Globe click handler
         globeBtn.addEventListener('click', (e) => {
-            pollution += pollutionPerClick;
+            const planet = getCurrentPlanet();
+            const amount = pollutionPerClick * planet.multiplier;
+            pollution += amount;
+            planet.pollution += amount;
             totalClicks++;
-            totalPollution += pollutionPerClick;
+            totalPollution += amount;
 
             const rect = globeBtn.getBoundingClientRect();
             const x = e.clientX || (rect.left + rect.width / 2);
             const y = e.clientY || (rect.top + rect.height / 2);
-            createParticle(x - 20, y - 20, pollutionPerClick);
+            createParticle(x - 20, y - 20, amount);
 
-            // Create smoke on click
             for (let i = 0; i < 3; i++) {
                 setTimeout(() => createSmoke(), i * 100);
             }
@@ -713,21 +791,21 @@
             updateDisplay();
         });
 
-        // Auto-pollution loop
         setInterval(() => {
             if (pollutionPerSecond > 0) {
-                pollution += pollutionPerSecond / 10;
-                totalPollution += pollutionPerSecond / 10;
+                const planet = getCurrentPlanet();
+                const amount = (pollutionPerSecond * planet.multiplier) / 10;
+                pollution += amount;
+                planet.pollution += amount;
+                totalPollution += amount;
                 updateDisplay();
 
-                // Random smoke particles
                 if (Math.random() < 0.3) {
                     createSmoke();
                 }
             }
         }, 100);
 
-        // Save game
         function saveGame() {
             const saveData = {
                 pollution,
@@ -735,12 +813,14 @@
                 pollutionPerSecond,
                 totalClicks,
                 totalPollution,
-                upgrades: upgrades.map(u => ({ id: u.id, owned: u.owned }))
+                currentPlanetIndex,
+                planetsDestroyed,
+                upgrades: upgrades.map(u => ({ id: u.id, owned: u.owned })),
+                planets: planets.map(p => ({ id: p.id, unlocked: p.unlocked, pollution: p.pollution, destroyed: p.destroyed }))
             };
             localStorage.setItem('pollutionClickerSave', JSON.stringify(saveData));
         }
 
-        // Load game
         function loadGame() {
             const saved = localStorage.getItem('pollutionClickerSave');
             if (saved) {
@@ -750,24 +830,41 @@
                 pollutionPerSecond = data.pollutionPerSecond || 0;
                 totalClicks = data.totalClicks || 0;
                 totalPollution = data.totalPollution || 0;
+                currentPlanetIndex = data.currentPlanetIndex || 0;
+                planetsDestroyed = data.planetsDestroyed || 0;
 
                 if (data.upgrades) {
                     data.upgrades.forEach(savedUpgrade => {
                         const upgrade = upgrades.find(u => u.id === savedUpgrade.id);
-                        if (upgrade) {
-                            upgrade.owned = savedUpgrade.owned;
+                        if (upgrade) upgrade.owned = savedUpgrade.owned;
+                    });
+                }
+
+                if (data.planets) {
+                    data.planets.forEach(savedPlanet => {
+                        const planet = planets.find(p => p.id === savedPlanet.id);
+                        if (planet) {
+                            planet.unlocked = savedPlanet.unlocked;
+                            planet.pollution = savedPlanet.pollution || 0;
+                            planet.destroyed = savedPlanet.destroyed || false;
                         }
                     });
                 }
             }
         }
 
-        // Auto-save every 30 seconds
         setInterval(saveGame, 30000);
 
-        // Initialize game
+        // Initialize
         loadGame();
+        const planet = getCurrentPlanet();
+        planetNameDisplay.textContent = planet.name;
+        currentPlanetNameDisplay.textContent = planet.name;
+        multiplierDisplay.textContent = `Multiplier: x${planet.multiplier}`;
+        planetsDestroyedDisplay.textContent = planetsDestroyed;
+        renderPlanetTabs();
         renderUpgrades();
+        renderPlanetShop();
         updateDisplay();
     </script>
 </body>
