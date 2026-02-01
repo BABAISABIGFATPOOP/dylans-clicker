@@ -3232,13 +3232,27 @@
             }
         }, 100);
 
+        // Helper to safely save large numbers as strings
+        function safeNumber(num) {
+            if (!isFinite(num)) return 'Infinity';
+            if (num > 1e300) return num.toExponential(15);
+            return num;
+        }
+
+        // Helper to load numbers (handles string format)
+        function loadNumber(val, defaultVal = 0) {
+            if (val === 'Infinity') return Infinity;
+            if (typeof val === 'string') return parseFloat(val) || defaultVal;
+            return val || defaultVal;
+        }
+
         function saveGame() {
             const saveData = {
-                pollution,
-                pollutionPerClick,
-                pollutionPerSecond,
-                totalClicks,
-                totalPollution,
+                pollution: safeNumber(pollution),
+                pollutionPerClick: safeNumber(pollutionPerClick),
+                pollutionPerSecond: safeNumber(pollutionPerSecond),
+                totalClicks: safeNumber(totalClicks),
+                totalPollution: safeNumber(totalPollution),
                 currentPlanetPerSystem,
                 planetsDestroyed,
                 upgrades: upgrades.map(u => ({ id: u.id, owned: u.owned })),
@@ -3246,44 +3260,44 @@
                 allSystemPlanets: Object.fromEntries(
                     Object.entries(systemPlanets).map(([sysId, planets]) => [
                         sysId,
-                        planets.map(p => ({ id: p.id, unlocked: p.unlocked, pollution: p.pollution, destroyed: p.destroyed }))
+                        planets.map(p => ({ id: p.id, unlocked: p.unlocked, pollution: safeNumber(p.pollution), destroyed: p.destroyed }))
                     ])
                 ),
                 // Toxic waste data
-                toxicWaste,
+                toxicWaste: safeNumber(toxicWaste),
                 lastToxicTime,
-                toxicUpgrades: toxicUpgrades.map(u => ({ id: u.id, owned: u.owned, cost: u.cost })),
-                toxicClickMult,
-                toxicAutoMult,
-                toxicWasteSpeedMult,
-                toxicPlanetMult,
-                toxicDoubleChance,
-                toxicGoldenChance,
+                toxicUpgrades: toxicUpgrades.map(u => ({ id: u.id, owned: u.owned, cost: safeNumber(u.cost) })),
+                toxicClickMult: safeNumber(toxicClickMult),
+                toxicAutoMult: safeNumber(toxicAutoMult),
+                toxicWasteSpeedMult: safeNumber(toxicWasteSpeedMult),
+                toxicPlanetMult: safeNumber(toxicPlanetMult),
+                toxicDoubleChance: safeNumber(toxicDoubleChance),
+                toxicGoldenChance: safeNumber(toxicGoldenChance),
                 soundEnabled,
                 // Solar system data
                 currentSystemIndex,
                 solarSystems: solarSystems.map(s => ({ id: s.id, unlocked: s.unlocked })),
                 // Prestige data
-                carbonCredits,
-                lifetimePollution,
+                carbonCredits: safeNumber(carbonCredits),
+                lifetimePollution: safeNumber(lifetimePollution),
                 timesPrestiged,
-                prestigeMultiplier,
-                prestigeUpgrades: prestigeUpgrades.map(u => ({ id: u.id, owned: u.owned, cost: u.cost })),
-                prestigeClickMult,
-                prestigeAutoMult,
-                prestigeStartBonus,
-                prestigeCostReduction,
-                prestigePlanetBoost,
-                prestigeToxicStart,
-                prestigeToxicSpeed,
-                prestigeSystemBoost,
-                prestigeDoubleMult,
-                prestigeDoubleClickChance,
-                prestigeUpgradeBoost,
-                prestigeCreditBoost,
-                prestigeSwitchBoost,
-                prestigePrestigeMult,
-                prestigeKeepUpgrades,
+                prestigeMultiplier: safeNumber(prestigeMultiplier),
+                prestigeUpgrades: prestigeUpgrades.map(u => ({ id: u.id, owned: u.owned, cost: safeNumber(u.cost) })),
+                prestigeClickMult: safeNumber(prestigeClickMult),
+                prestigeAutoMult: safeNumber(prestigeAutoMult),
+                prestigeStartBonus: safeNumber(prestigeStartBonus),
+                prestigeCostReduction: safeNumber(prestigeCostReduction),
+                prestigePlanetBoost: safeNumber(prestigePlanetBoost),
+                prestigeToxicStart: safeNumber(prestigeToxicStart),
+                prestigeToxicSpeed: safeNumber(prestigeToxicSpeed),
+                prestigeSystemBoost: safeNumber(prestigeSystemBoost),
+                prestigeDoubleMult: safeNumber(prestigeDoubleMult),
+                prestigeDoubleClickChance: safeNumber(prestigeDoubleClickChance),
+                prestigeUpgradeBoost: safeNumber(prestigeUpgradeBoost),
+                prestigeCreditBoost: safeNumber(prestigeCreditBoost),
+                prestigeSwitchBoost: safeNumber(prestigeSwitchBoost),
+                prestigePrestigeMult: safeNumber(prestigePrestigeMult),
+                prestigeKeepUpgrades: safeNumber(prestigeKeepUpgrades),
                 // Permanent upgrade levels (persist through prestige)
                 upgradeLevels
             };
@@ -3294,11 +3308,11 @@
             const saved = localStorage.getItem('pollutionClickerSave');
             if (saved) {
                 const data = JSON.parse(saved);
-                pollution = data.pollution || 0;
-                pollutionPerClick = data.pollutionPerClick || 1;
-                pollutionPerSecond = data.pollutionPerSecond || 0;
-                totalClicks = data.totalClicks || 0;
-                totalPollution = data.totalPollution || 0;
+                pollution = loadNumber(data.pollution, 0);
+                pollutionPerClick = loadNumber(data.pollutionPerClick, 1);
+                pollutionPerSecond = loadNumber(data.pollutionPerSecond, 0);
+                totalClicks = loadNumber(data.totalClicks, 0);
+                totalPollution = loadNumber(data.totalPollution, 0);
                 // Load per-system planet indices
                 if (data.currentPlanetPerSystem) {
                     Object.assign(currentPlanetPerSystem, data.currentPlanetPerSystem);
@@ -3323,7 +3337,7 @@
                                 const planet = systemPlanets[sysId].find(p => p.id === savedPlanet.id);
                                 if (planet) {
                                     planet.unlocked = savedPlanet.unlocked;
-                                    planet.pollution = savedPlanet.pollution || 0;
+                                    planet.pollution = loadNumber(savedPlanet.pollution, 0);
                                     planet.destroyed = savedPlanet.destroyed || false;
                                 }
                             });
@@ -3342,14 +3356,14 @@
                 }
 
                 // Load toxic waste data
-                toxicWaste = data.toxicWaste || 0;
+                toxicWaste = loadNumber(data.toxicWaste, 0);
                 lastToxicTime = data.lastToxicTime || Date.now();
-                toxicClickMult = data.toxicClickMult || 1;
-                toxicAutoMult = data.toxicAutoMult || 1;
-                toxicWasteSpeedMult = data.toxicWasteSpeedMult || 1;
-                toxicPlanetMult = data.toxicPlanetMult || 1;
-                toxicDoubleChance = data.toxicDoubleChance || 0;
-                toxicGoldenChance = data.toxicGoldenChance || 0;
+                toxicClickMult = loadNumber(data.toxicClickMult, 1);
+                toxicAutoMult = loadNumber(data.toxicAutoMult, 1);
+                toxicWasteSpeedMult = loadNumber(data.toxicWasteSpeedMult, 1);
+                toxicPlanetMult = loadNumber(data.toxicPlanetMult, 1);
+                toxicDoubleChance = loadNumber(data.toxicDoubleChance, 0);
+                toxicGoldenChance = loadNumber(data.toxicGoldenChance, 0);
                 soundEnabled = data.soundEnabled !== undefined ? data.soundEnabled : true;
 
                 if (data.toxicUpgrades) {
@@ -3357,7 +3371,7 @@
                         const upgrade = toxicUpgrades.find(u => u.id === savedUpgrade.id);
                         if (upgrade) {
                             upgrade.owned = savedUpgrade.owned;
-                            upgrade.cost = savedUpgrade.cost;
+                            upgrade.cost = loadNumber(savedUpgrade.cost, upgrade.cost);
                         }
                     });
                 }
@@ -3374,32 +3388,32 @@
                 }
 
                 // Load prestige data
-                carbonCredits = data.carbonCredits || 0;
-                lifetimePollution = data.lifetimePollution || 0;
+                carbonCredits = loadNumber(data.carbonCredits, 0);
+                lifetimePollution = loadNumber(data.lifetimePollution, 0);
                 timesPrestiged = data.timesPrestiged || 0;
-                prestigeMultiplier = data.prestigeMultiplier || 1;
-                prestigeClickMult = data.prestigeClickMult || 1;
-                prestigeAutoMult = data.prestigeAutoMult || 1;
-                prestigeStartBonus = data.prestigeStartBonus || 0;
-                prestigeCostReduction = data.prestigeCostReduction || 0;
-                prestigePlanetBoost = data.prestigePlanetBoost || 1;
-                prestigeToxicStart = data.prestigeToxicStart || 0;
-                prestigeToxicSpeed = data.prestigeToxicSpeed || 0;
-                prestigeSystemBoost = data.prestigeSystemBoost || 1;
-                prestigeDoubleMult = data.prestigeDoubleMult || 1;
-                prestigeDoubleClickChance = data.prestigeDoubleClickChance || 0;
-                prestigeUpgradeBoost = data.prestigeUpgradeBoost || 1;
-                prestigeCreditBoost = data.prestigeCreditBoost || 1;
-                prestigeSwitchBoost = data.prestigeSwitchBoost || 1;
-                prestigePrestigeMult = data.prestigePrestigeMult || 1;
-                prestigeKeepUpgrades = data.prestigeKeepUpgrades || 0;
+                prestigeMultiplier = loadNumber(data.prestigeMultiplier, 1);
+                prestigeClickMult = loadNumber(data.prestigeClickMult, 1);
+                prestigeAutoMult = loadNumber(data.prestigeAutoMult, 1);
+                prestigeStartBonus = loadNumber(data.prestigeStartBonus, 0);
+                prestigeCostReduction = loadNumber(data.prestigeCostReduction, 0);
+                prestigePlanetBoost = loadNumber(data.prestigePlanetBoost, 1);
+                prestigeToxicStart = loadNumber(data.prestigeToxicStart, 0);
+                prestigeToxicSpeed = loadNumber(data.prestigeToxicSpeed, 0);
+                prestigeSystemBoost = loadNumber(data.prestigeSystemBoost, 1);
+                prestigeDoubleMult = loadNumber(data.prestigeDoubleMult, 1);
+                prestigeDoubleClickChance = loadNumber(data.prestigeDoubleClickChance, 0);
+                prestigeUpgradeBoost = loadNumber(data.prestigeUpgradeBoost, 1);
+                prestigeCreditBoost = loadNumber(data.prestigeCreditBoost, 1);
+                prestigeSwitchBoost = loadNumber(data.prestigeSwitchBoost, 1);
+                prestigePrestigeMult = loadNumber(data.prestigePrestigeMult, 1);
+                prestigeKeepUpgrades = loadNumber(data.prestigeKeepUpgrades, 0);
 
                 if (data.prestigeUpgrades) {
                     data.prestigeUpgrades.forEach(savedUpgrade => {
                         const upgrade = prestigeUpgrades.find(u => u.id === savedUpgrade.id);
                         if (upgrade) {
                             upgrade.owned = savedUpgrade.owned;
-                            upgrade.cost = savedUpgrade.cost;
+                            upgrade.cost = loadNumber(savedUpgrade.cost, upgrade.cost);
                         }
                     });
                 }
