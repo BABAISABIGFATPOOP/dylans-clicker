@@ -411,30 +411,55 @@
             right: 380px;
             background: rgba(0, 0, 0, 0.9);
             border-bottom: 2px solid #6a0dad;
-            padding: 8px 15px;
+            padding: 4px 10px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
             z-index: 98;
             overflow-x: auto;
+            transition: all 0.3s;
+        }
+
+        .solar-system-bar.collapsed {
+            padding: 4px 10px;
+        }
+
+        .solar-system-bar.collapsed #system-buttons {
+            display: none;
+        }
+
+        .solar-system-toggle {
+            background: none;
+            border: 1px solid #6a0dad;
+            color: #6a0dad;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            transition: all 0.2s;
+        }
+
+        .solar-system-toggle:hover {
+            background: rgba(106, 13, 173, 0.3);
+            color: #fff;
         }
 
         .solar-system-label {
             color: #6a0dad;
             font-weight: bold;
-            font-size: 0.8rem;
+            font-size: 0.65rem;
             white-space: nowrap;
         }
 
         .system-btn {
-            padding: 5px 12px;
-            border: 2px solid #444;
-            border-radius: 15px;
+            padding: 3px 8px;
+            border: 1px solid #444;
+            border-radius: 10px;
             background: rgba(30, 0, 50, 0.6);
             color: #aaa;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 0.8rem;
+            font-size: 0.65rem;
             white-space: nowrap;
         }
 
@@ -460,7 +485,7 @@
         }
 
         .game-container {
-            padding-top: 90px;
+            padding-top: 75px;
         }
 
         @media (max-width: 768px) {
@@ -469,7 +494,7 @@
                 top: 50px;
             }
             .game-container {
-                padding-top: 130px;
+                padding-top: 100px;
             }
         }
 
@@ -961,8 +986,9 @@
             </div>
         </div>
     </div>
-    <div class="solar-system-bar">
-        <span class="solar-system-label">⭐ SOLAR SYSTEM:</span>
+    <div class="solar-system-bar" id="solar-system-bar">
+        <button class="solar-system-toggle" id="system-toggle">▼</button>
+        <span class="solar-system-label">⭐ SYSTEMS:</span>
         <div id="system-buttons"></div>
     </div>
     <div class="game-container">
@@ -2332,6 +2358,14 @@
             soundEnabled = !soundEnabled;
             soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
             if (soundEnabled) playSound('click');
+        });
+
+        // Solar system bar toggle
+        const solarSystemBar = document.getElementById('solar-system-bar');
+        const systemToggle = document.getElementById('system-toggle');
+        systemToggle.addEventListener('click', () => {
+            solarSystemBar.classList.toggle('collapsed');
+            systemToggle.textContent = solarSystemBar.classList.contains('collapsed') ? '▶' : '▼';
         });
 
         // Hard mode toggle
