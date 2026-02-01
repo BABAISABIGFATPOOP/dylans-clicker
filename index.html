@@ -1661,7 +1661,7 @@
         // Permanent Upgrade Levels (persist through prestige, bought with toxic waste)
         // Each level gives +100% power to that upgrade
         let upgradeLevels = {}; // { upgradeId: level }
-        const maxUpgradeLevel = 10;
+        const maxUpgradeLevel = Infinity; // No cap!
         const upgradeLevelCost = (level) => Math.ceil(Math.pow(1.5, level)); // 1, 2, 3, 5, 8, 12, 18, 27, 41, 61
 
         function getUpgradeLevel(upgradeId) {
