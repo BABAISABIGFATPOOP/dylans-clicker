@@ -3473,6 +3473,19 @@
             updateDisplay();
         });
 
+        // Keyboard clicking - any letter, space, or enter counts as a click
+        document.addEventListener('keydown', (e) => {
+            // Check if it's a letter (a-z), space, or enter
+            const isLetter = e.key.length === 1 && e.key.match(/[a-zA-Z]/);
+            const isSpace = e.code === 'Space';
+            const isEnter = e.code === 'Enter';
+
+            if (isLetter || isSpace || isEnter) {
+                e.preventDefault();
+                globeBtn.click();
+            }
+        });
+
         setInterval(() => {
             const autoPower = calculateAutoPower();
             if (autoPower > 0) {
