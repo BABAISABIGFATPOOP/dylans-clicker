@@ -2337,13 +2337,120 @@
         // Hard mode toggle
         const hardModeToggle = document.getElementById('hard-mode-toggle');
         hardModeToggle.addEventListener('click', () => {
+            // Save current progress before switching
+            saveGame();
+
+            // Toggle mode
             hardMode = !hardMode;
             hardModeToggle.classList.toggle('active', hardMode);
             hardModeToggle.textContent = hardMode ? '💀 HARD ON' : '💀 HARD';
+
+            // Check if we have a save for the new mode
+            const newSaveKey = getSaveKey();
+            const existingSave = localStorage.getItem(newSaveKey);
+
+            if (existingSave) {
+                // Load existing save for this mode
+                const data = JSON.parse(existingSave);
+                pollution = loadNumber(data.pollution, 0);
+                pollutionPerClick = loadNumber(data.pollutionPerClick, 1);
+                pollutionPerSecond = loadNumber(data.pollutionPerSecond, 0);
+                totalClicks = loadNumber(data.totalClicks, 0);
+                totalPollution = loadNumber(data.totalPollution, 0);
+                if (data.currentPlanetPerSystem) {
+                    Object.keys(currentPlanetPerSystem).forEach(k => currentPlanetPerSystem[k] = 0);
+                    Object.assign(currentPlanetPerSystem, data.currentPlanetPerSystem);
+                }
+                planetsDestroyed = data.planetsDestroyed || 0;
+                if (data.upgrades) {
+                    data.upgrades.forEach(savedUpgrade => {
+                        const upgrade = upgrades.find(u => u.id === savedUpgrade.id);
+                        if (upgrade) upgrade.owned = savedUpgrade.owned;
+                    });
+                }
+                if (data.allSystemPlanets) {
+                    Object.entries(data.allSystemPlanets).forEach(([sysId, savedPlanets]) => {
+                        if (systemPlanets[sysId]) {
+                            savedPlanets.forEach(savedPlanet => {
+                                const planet = systemPlanets[sysId].find(p => p.id === savedPlanet.id);
+                                if (planet) {
+                                    planet.unlocked = savedPlanet.unlocked;
+                                    planet.pollution = loadNumber(savedPlanet.pollution, 0);
+                                    planet.destroyed = savedPlanet.destroyed || false;
+                                }
+                            });
+                        }
+                    });
+                }
+                toxicWaste = loadNumber(data.toxicWaste, 0);
+                lastToxicTime = data.lastToxicTime || Date.now();
+                toxicClickMult = loadNumber(data.toxicClickMult, 1);
+                toxicAutoMult = loadNumber(data.toxicAutoMult, 1);
+                toxicWasteSpeedMult = loadNumber(data.toxicWasteSpeedMult, 1);
+                toxicPlanetMult = loadNumber(data.toxicPlanetMult, 1);
+                toxicDoubleChance = loadNumber(data.toxicDoubleChance, 0);
+                toxicGoldenChance = loadNumber(data.toxicGoldenChance, 0);
+                if (data.toxicUpgrades) {
+                    data.toxicUpgrades.forEach(savedUpgrade => {
+                        const upgrade = toxicUpgrades.find(u => u.id === savedUpgrade.id);
+                        if (upgrade) {
+                            upgrade.owned = savedUpgrade.owned;
+                            upgrade.cost = loadNumber(savedUpgrade.cost, upgrade.cost);
+                        }
+                    });
+                }
+                currentSystemIndex = data.currentSystemIndex || 0;
+                if (data.solarSystems) {
+                    data.solarSystems.forEach(savedSystem => {
+                        const system = solarSystems.find(s => s.id === savedSystem.id);
+                        if (system) system.unlocked = savedSystem.unlocked;
+                    });
+                }
+                carbonCredits = loadNumber(data.carbonCredits, 0);
+                lifetimePollution = loadNumber(data.lifetimePollution, 0);
+                timesPrestiged = data.timesPrestiged || 0;
+                prestigeMultiplier = loadNumber(data.prestigeMultiplier, 1);
+                prestigeClickMult = loadNumber(data.prestigeClickMult, 1);
+                prestigeAutoMult = loadNumber(data.prestigeAutoMult, 1);
+                prestigeStartBonus = loadNumber(data.prestigeStartBonus, 0);
+                prestigeCostReduction = loadNumber(data.prestigeCostReduction, 0);
+                prestigePlanetBoost = loadNumber(data.prestigePlanetBoost, 1);
+                prestigeToxicStart = loadNumber(data.prestigeToxicStart, 0);
+                prestigeToxicSpeed = loadNumber(data.prestigeToxicSpeed, 0);
+                prestigeSystemBoost = loadNumber(data.prestigeSystemBoost, 1);
+                prestigeDoubleMult = loadNumber(data.prestigeDoubleMult, 1);
+                prestigeDoubleClickChance = loadNumber(data.prestigeDoubleClickChance, 0);
+                prestigeUpgradeBoost = loadNumber(data.prestigeUpgradeBoost, 1);
+                prestigeCreditBoost = loadNumber(data.prestigeCreditBoost, 1);
+                prestigeSwitchBoost = loadNumber(data.prestigeSwitchBoost, 1);
+                prestigePrestigeMult = loadNumber(data.prestigePrestigeMult, 1);
+                prestigeKeepUpgrades = loadNumber(data.prestigeKeepUpgrades, 0);
+                if (data.prestigeUpgrades) {
+                    data.prestigeUpgrades.forEach(savedUpgrade => {
+                        const upgrade = prestigeUpgrades.find(u => u.id === savedUpgrade.id);
+                        if (upgrade) {
+                            upgrade.owned = savedUpgrade.owned;
+                            upgrade.cost = loadNumber(savedUpgrade.cost, upgrade.cost);
+                        }
+                    });
+                }
+                if (data.upgradeLevels) upgradeLevels = data.upgradeLevels;
+            } else {
+                // No save exists for this mode - reset to fresh start
+                resetGameState();
+            }
+
+            // Save the mode switch
+            localStorage.setItem('pollutionClickerMode', hardMode ? 'hard' : 'normal');
+
+            // Re-render everything
             renderUpgrades();
             renderPlanetShop();
             renderSystemShop();
-            saveGame();
+            renderToxicUpgrades();
+            renderPrestigeUpgrades();
+            renderSystemSelector();
+            updateDisplay();
         });
 
         // Prestige System functions
@@ -2873,6 +2980,92 @@
             return hardMode ? cost * hardModeMultiplier : cost;
         }
 
+        function getSaveKey() {
+            return hardMode ? 'pollutionClickerSaveHard' : 'pollutionClickerSave';
+        }
+
+        function resetGameState() {
+            // Reset core stats
+            pollution = 0;
+            pollutionPerClick = 1;
+            pollutionPerSecond = 0;
+            totalClicks = 0;
+            totalPollution = 0;
+
+            // Reset toxic waste
+            toxicWaste = 0;
+            toxicWasteProgress = 0;
+            toxicWasteReady = false;
+            lastToxicTime = Date.now();
+            toxicClickMult = 1;
+            toxicAutoMult = 1;
+            toxicWasteSpeedMult = 1;
+            toxicPlanetMult = 1;
+            toxicDoubleChance = 0;
+            toxicGoldenChance = 0;
+
+            // Reset toxic upgrades
+            toxicUpgrades.forEach(u => {
+                u.owned = 0;
+                // Reset cost based on id
+                const baseCosts = { toxic_click: 1, toxic_auto: 1, toxic_speed: 2, toxic_planet: 3, toxic_double: 5, toxic_golden: 5, toxic_mega: 10, toxic_transcend: 25 };
+                u.cost = baseCosts[u.id] || 1;
+            });
+
+            // Reset prestige (but keep lifetime stats for story)
+            carbonCredits = 0;
+            lifetimePollution = 0;
+            timesPrestiged = 0;
+            prestigeMultiplier = 1;
+            prestigeClickMult = 1;
+            prestigeAutoMult = 1;
+            prestigeStartBonus = 0;
+            prestigeCostReduction = 0;
+            prestigePlanetBoost = 1;
+            prestigeToxicStart = 0;
+            prestigeToxicSpeed = 0;
+            prestigeSystemBoost = 1;
+            prestigeDoubleMult = 1;
+            prestigeDoubleClickChance = 0;
+            prestigeUpgradeBoost = 1;
+            prestigeCreditBoost = 1;
+            prestigeSwitchBoost = 1;
+            prestigePrestigeMult = 1;
+            prestigeKeepUpgrades = 0;
+
+            // Reset prestige upgrades
+            prestigeUpgrades.forEach(u => {
+                u.owned = 0;
+                // Reset cost based on id
+                const baseCosts = { p_click: 1, p_auto: 1, p_start: 2, p_cheap: 3, p_planet: 5, p_toxic: 5, p_time: 8, p_system: 10, p_mega: 50, p_eternal: 100, p_double: 15, p_quantum: 20, p_cosmic: 25, p_void: 30, p_dimension: 40, p_infinity: 75, p_omega: 200, p_transcend: 150, p_godmode: 500, p_absolute: 1000 };
+                u.cost = baseCosts[u.id] || 1;
+            });
+
+            // Reset upgrade levels
+            upgradeLevels = {};
+
+            // Reset upgrades
+            upgrades.forEach(u => u.owned = 0);
+
+            // Reset solar systems (only first unlocked)
+            currentSystemIndex = 0;
+            solarSystems.forEach((s, i) => s.unlocked = (i === 0));
+
+            // Reset current planet per system
+            Object.keys(currentPlanetPerSystem).forEach(k => currentPlanetPerSystem[k] = 0);
+
+            // Reset all planets
+            Object.values(systemPlanets).forEach(planets => {
+                planets.forEach((p, i) => {
+                    p.unlocked = (i === 0);
+                    p.pollution = 0;
+                    p.destroyed = false;
+                });
+            });
+
+            planetsDestroyed = 0;
+        }
+
         function formatNumber(num) {
             if (!isFinite(num)) return '∞ INFINITY';
             // Beyond Centillion - use scientific notation with fun names
@@ -3368,11 +3561,21 @@
                 // Hard mode
                 hardMode
             };
-            localStorage.setItem('pollutionClickerSave', JSON.stringify(saveData));
+            localStorage.setItem(getSaveKey(), JSON.stringify(saveData));
+            // Also save which mode we're in
+            localStorage.setItem('pollutionClickerMode', hardMode ? 'hard' : 'normal');
         }
 
         function loadGame() {
-            const saved = localStorage.getItem('pollutionClickerSave');
+            // First check which mode we should load
+            const savedMode = localStorage.getItem('pollutionClickerMode');
+            if (savedMode === 'hard') {
+                hardMode = true;
+                hardModeToggle.classList.add('active');
+                hardModeToggle.textContent = '💀 HARD ON';
+            }
+
+            const saved = localStorage.getItem(getSaveKey());
             if (saved) {
                 const data = JSON.parse(saved);
                 pollution = loadNumber(data.pollution, 0);
@@ -3489,11 +3692,6 @@
                 if (data.upgradeLevels) {
                     upgradeLevels = data.upgradeLevels;
                 }
-
-                // Load hard mode
-                hardMode = data.hardMode || false;
-                hardModeToggle.classList.toggle('active', hardMode);
-                hardModeToggle.textContent = hardMode ? '💀 HARD ON' : '💀 HARD';
 
                 soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
             }
