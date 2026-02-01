@@ -1645,14 +1645,14 @@
 
         // Toxic Waste Upgrades
         const toxicUpgrades = [
-            { id: 'toxic_click', name: 'Radioactive Fingers', desc: '+50% click power permanently', cost: 1, owned: 0, effect: 'clickMult', value: 0.5 },
-            { id: 'toxic_auto', name: 'Mutant Workers', desc: '+50% auto pollution permanently', cost: 1, owned: 0, effect: 'autoMult', value: 0.5 },
-            { id: 'toxic_speed', name: 'Accelerated Decay', desc: 'Toxic waste grows 20% faster', cost: 2, owned: 0, effect: 'wasteSpeed', value: 0.2 },
-            { id: 'toxic_planet', name: 'Planetary Corruption', desc: '+25% to all planet multipliers', cost: 3, owned: 0, effect: 'planetMult', value: 0.25 },
-            { id: 'toxic_double', name: 'Chain Reaction', desc: '10% chance for double toxic waste', cost: 5, owned: 0, effect: 'wasteDouble', value: 0.1 },
-            { id: 'toxic_golden', name: 'Golden Sludge', desc: 'Rare golden waste worth 3x', cost: 5, owned: 0, effect: 'goldenChance', value: 0.1 },
-            { id: 'toxic_mega', name: 'Mega Mutation', desc: '+100% to everything', cost: 10, owned: 0, effect: 'megaMult', value: 1.0 },
-            { id: 'toxic_transcend', name: 'Transcend Reality', desc: 'Pollution transcends dimensions (+500%)', cost: 25, owned: 0, effect: 'transcend', value: 5.0 },
+            { id: 'toxic_click', name: 'Radioactive Fingers', desc: '+50% click power permanently', cost: 10, owned: 0, effect: 'clickMult', value: 0.5 },
+            { id: 'toxic_auto', name: 'Mutant Workers', desc: '+50% auto pollution permanently', cost: 10, owned: 0, effect: 'autoMult', value: 0.5 },
+            { id: 'toxic_speed', name: 'Accelerated Decay', desc: 'Toxic waste grows 20% faster', cost: 20, owned: 0, effect: 'wasteSpeed', value: 0.2 },
+            { id: 'toxic_planet', name: 'Planetary Corruption', desc: '+25% to all planet multipliers', cost: 30, owned: 0, effect: 'planetMult', value: 0.25 },
+            { id: 'toxic_double', name: 'Chain Reaction', desc: '10% chance for double toxic waste', cost: 50, owned: 0, effect: 'wasteDouble', value: 0.1 },
+            { id: 'toxic_golden', name: 'Golden Sludge', desc: 'Rare golden waste worth 3x', cost: 50, owned: 0, effect: 'goldenChance', value: 0.1 },
+            { id: 'toxic_mega', name: 'Mega Mutation', desc: '+100% to everything', cost: 100, owned: 0, effect: 'megaMult', value: 1.0 },
+            { id: 'toxic_transcend', name: 'Transcend Reality', desc: 'Pollution transcends dimensions (+500%)', cost: 250, owned: 0, effect: 'transcend', value: 5.0 },
         ];
 
         // Toxic multipliers
@@ -1671,26 +1671,26 @@
 
         // Prestige Upgrades (permanent across rebirths)
         const prestigeUpgrades = [
-            { id: 'p_click', name: 'Carbon Fingers', desc: 'x2 click power per level', cost: 1, owned: 0, maxLevel: Infinity, effect: 'clickMult', value: 2 },
-            { id: 'p_auto', name: 'Carbon Automation', desc: 'x2 auto pollution per level', cost: 1, owned: 0, maxLevel: Infinity, effect: 'autoMult', value: 2 },
-            { id: 'p_start', name: 'Head Start', desc: 'Start with 1000x more pollution', cost: 2, owned: 0, maxLevel: Infinity, effect: 'startBonus', value: 1000 },
-            { id: 'p_cheap', name: 'Bulk Discount', desc: 'Upgrades cost 1% less per level', cost: 3, owned: 0, maxLevel: Infinity, effect: 'costReduction', value: 0.01 },
-            { id: 'p_planet', name: 'Planetary Dominion', desc: 'x1.5 planet multipliers per level', cost: 5, owned: 0, maxLevel: Infinity, effect: 'planetBoost', value: 1.5 },
-            { id: 'p_toxic', name: 'Radioactive Legacy', desc: 'Start with +1 Toxic Waste per level', cost: 5, owned: 0, maxLevel: Infinity, effect: 'toxicStart', value: 1 },
-            { id: 'p_time', name: 'Time Dilation', desc: 'Toxic waste grows 10% faster per level', cost: 8, owned: 0, maxLevel: Infinity, effect: 'toxicSpeed', value: 0.1 },
-            { id: 'p_system', name: 'Interstellar', desc: 'x2 solar system multipliers per level', cost: 10, owned: 0, maxLevel: Infinity, effect: 'systemBoost', value: 2 },
-            { id: 'p_mega', name: 'Carbon Singularity', desc: 'x10 to everything!', cost: 50, owned: 0, maxLevel: Infinity, effect: 'megaBoost', value: 10 },
-            { id: 'p_eternal', name: 'Eternal Pollution', desc: 'x100 prestige multiplier!', cost: 100, owned: 0, maxLevel: Infinity, effect: 'prestigeBoost', value: 100 },
-            { id: 'p_double', name: 'Double Trouble', desc: 'x3 click AND auto power', cost: 15, owned: 0, maxLevel: Infinity, effect: 'doubleMult', value: 3 },
-            { id: 'p_quantum', name: 'Quantum Pollution', desc: '+1% chance for double clicks per level', cost: 20, owned: 0, maxLevel: Infinity, effect: 'doubleClick', value: 0.01 },
-            { id: 'p_cosmic', name: 'Cosmic Efficiency', desc: 'All upgrades give +10% more', cost: 25, owned: 0, maxLevel: Infinity, effect: 'upgradeBoost', value: 0.1 },
-            { id: 'p_void', name: 'Void Harvester', desc: '+50% carbon credits per rebirth', cost: 30, owned: 0, maxLevel: Infinity, effect: 'creditBoost', value: 0.5 },
-            { id: 'p_dimension', name: 'Dimension Walker', desc: 'x2 pollution when switching planets', cost: 40, owned: 0, maxLevel: Infinity, effect: 'switchBoost', value: 2 },
-            { id: 'p_infinity', name: 'Infinite Growth', desc: 'x1.2 to prestige multiplier per level', cost: 75, owned: 0, maxLevel: Infinity, effect: 'prestigeMult', value: 1.2 },
-            { id: 'p_omega', name: 'Omega Protocol', desc: 'x1000 to everything!', cost: 200, owned: 0, maxLevel: Infinity, effect: 'omegaBoost', value: 1000 },
-            { id: 'p_transcend', name: 'Transcendence', desc: 'Keep 1% of upgrades on rebirth per level', cost: 150, owned: 0, maxLevel: Infinity, effect: 'keepUpgrades', value: 0.01 },
-            { id: 'p_godmode', name: 'Pollution God', desc: 'x10000 prestige multiplier!', cost: 500, owned: 0, maxLevel: Infinity, effect: 'godBoost', value: 10000 },
-            { id: 'p_absolute', name: 'Absolute Power', desc: 'x100000 to ALL multipliers!', cost: 1000, owned: 0, maxLevel: Infinity, effect: 'absoluteBoost', value: 100000 },
+            { id: 'p_click', name: 'Carbon Fingers', desc: 'x2 click power per level', cost: 10, owned: 0, maxLevel: Infinity, effect: 'clickMult', value: 2 },
+            { id: 'p_auto', name: 'Carbon Automation', desc: 'x2 auto pollution per level', cost: 10, owned: 0, maxLevel: Infinity, effect: 'autoMult', value: 2 },
+            { id: 'p_start', name: 'Head Start', desc: 'Start with 1000x more pollution', cost: 20, owned: 0, maxLevel: Infinity, effect: 'startBonus', value: 1000 },
+            { id: 'p_cheap', name: 'Bulk Discount', desc: 'Upgrades cost 1% less per level', cost: 30, owned: 0, maxLevel: Infinity, effect: 'costReduction', value: 0.01 },
+            { id: 'p_planet', name: 'Planetary Dominion', desc: 'x1.5 planet multipliers per level', cost: 50, owned: 0, maxLevel: Infinity, effect: 'planetBoost', value: 1.5 },
+            { id: 'p_toxic', name: 'Radioactive Legacy', desc: 'Start with +1 Toxic Waste per level', cost: 50, owned: 0, maxLevel: Infinity, effect: 'toxicStart', value: 1 },
+            { id: 'p_time', name: 'Time Dilation', desc: 'Toxic waste grows 10% faster per level', cost: 80, owned: 0, maxLevel: Infinity, effect: 'toxicSpeed', value: 0.1 },
+            { id: 'p_system', name: 'Interstellar', desc: 'x2 solar system multipliers per level', cost: 100, owned: 0, maxLevel: Infinity, effect: 'systemBoost', value: 2 },
+            { id: 'p_mega', name: 'Carbon Singularity', desc: 'x10 to everything!', cost: 500, owned: 0, maxLevel: Infinity, effect: 'megaBoost', value: 10 },
+            { id: 'p_eternal', name: 'Eternal Pollution', desc: 'x100 prestige multiplier!', cost: 1000, owned: 0, maxLevel: Infinity, effect: 'prestigeBoost', value: 100 },
+            { id: 'p_double', name: 'Double Trouble', desc: 'x3 click AND auto power', cost: 150, owned: 0, maxLevel: Infinity, effect: 'doubleMult', value: 3 },
+            { id: 'p_quantum', name: 'Quantum Pollution', desc: '+1% chance for double clicks per level', cost: 200, owned: 0, maxLevel: Infinity, effect: 'doubleClick', value: 0.01 },
+            { id: 'p_cosmic', name: 'Cosmic Efficiency', desc: 'All upgrades give +10% more', cost: 250, owned: 0, maxLevel: Infinity, effect: 'upgradeBoost', value: 0.1 },
+            { id: 'p_void', name: 'Void Harvester', desc: '+50% carbon credits per rebirth', cost: 300, owned: 0, maxLevel: Infinity, effect: 'creditBoost', value: 0.5 },
+            { id: 'p_dimension', name: 'Dimension Walker', desc: 'x2 pollution when switching planets', cost: 400, owned: 0, maxLevel: Infinity, effect: 'switchBoost', value: 2 },
+            { id: 'p_infinity', name: 'Infinite Growth', desc: 'x1.2 to prestige multiplier per level', cost: 750, owned: 0, maxLevel: Infinity, effect: 'prestigeMult', value: 1.2 },
+            { id: 'p_omega', name: 'Omega Protocol', desc: 'x1000 to everything!', cost: 2000, owned: 0, maxLevel: Infinity, effect: 'omegaBoost', value: 1000 },
+            { id: 'p_transcend', name: 'Transcendence', desc: 'Keep 1% of upgrades on rebirth per level', cost: 1500, owned: 0, maxLevel: Infinity, effect: 'keepUpgrades', value: 0.01 },
+            { id: 'p_godmode', name: 'Pollution God', desc: 'x10000 prestige multiplier!', cost: 5000, owned: 0, maxLevel: Infinity, effect: 'godBoost', value: 10000 },
+            { id: 'p_absolute', name: 'Absolute Power', desc: 'x100000 to ALL multipliers!', cost: 10000, owned: 0, maxLevel: Infinity, effect: 'absoluteBoost', value: 100000 },
         ];
 
         // Prestige multiplier bonuses
@@ -3042,7 +3042,7 @@
             toxicUpgrades.forEach(u => {
                 u.owned = 0;
                 // Reset cost based on id
-                const baseCosts = { toxic_click: 1, toxic_auto: 1, toxic_speed: 2, toxic_planet: 3, toxic_double: 5, toxic_golden: 5, toxic_mega: 10, toxic_transcend: 25 };
+                const baseCosts = { toxic_click: 10, toxic_auto: 10, toxic_speed: 20, toxic_planet: 30, toxic_double: 50, toxic_golden: 50, toxic_mega: 100, toxic_transcend: 250 };
                 u.cost = baseCosts[u.id] || 1;
             });
 
@@ -3071,7 +3071,7 @@
             prestigeUpgrades.forEach(u => {
                 u.owned = 0;
                 // Reset cost based on id
-                const baseCosts = { p_click: 1, p_auto: 1, p_start: 2, p_cheap: 3, p_planet: 5, p_toxic: 5, p_time: 8, p_system: 10, p_mega: 50, p_eternal: 100, p_double: 15, p_quantum: 20, p_cosmic: 25, p_void: 30, p_dimension: 40, p_infinity: 75, p_omega: 200, p_transcend: 150, p_godmode: 500, p_absolute: 1000 };
+                const baseCosts = { p_click: 10, p_auto: 10, p_start: 20, p_cheap: 30, p_planet: 50, p_toxic: 50, p_time: 80, p_system: 100, p_mega: 500, p_eternal: 1000, p_double: 150, p_quantum: 200, p_cosmic: 250, p_void: 300, p_dimension: 400, p_infinity: 750, p_omega: 2000, p_transcend: 1500, p_godmode: 5000, p_absolute: 10000 };
                 u.cost = baseCosts[u.id] || 1;
             });
 
