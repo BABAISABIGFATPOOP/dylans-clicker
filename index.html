@@ -184,6 +184,31 @@
             border-color: #888;
         }
 
+        .hard-mode-toggle {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #444;
+            border-radius: 10px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            z-index: 100;
+            color: #888;
+        }
+
+        .hard-mode-toggle:hover {
+            border-color: #888;
+        }
+
+        .hard-mode-toggle.active {
+            border-color: #ff4444;
+            color: #ff4444;
+            background: rgba(255, 0, 0, 0.2);
+        }
+
         .prestige-display {
             position: fixed;
             top: 220px;
@@ -905,6 +930,7 @@
         <div class="timer" id="toxic-timer">Growing...</div>
     </div>
     <button class="sound-toggle" id="sound-toggle" title="Toggle Sound">🔊</button>
+    <button class="hard-mode-toggle" id="hard-mode-toggle" title="Toggle Hard Mode (100x harder)">💀 HARD</button>
     <div class="prestige-display" id="prestige-display" title="Click to Rebirth!">
         <span class="icon">💎</span>
         <div class="count"><span id="carbon-credits">0</span> Carbon Credits</div>
@@ -1721,6 +1747,8 @@
 
         // Sound System
         let soundEnabled = true;
+        let hardMode = false;
+        const hardModeMultiplier = 100; // Everything is 100x harder
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
 
@@ -2306,6 +2334,18 @@
             if (soundEnabled) playSound('click');
         });
 
+        // Hard mode toggle
+        const hardModeToggle = document.getElementById('hard-mode-toggle');
+        hardModeToggle.addEventListener('click', () => {
+            hardMode = !hardMode;
+            hardModeToggle.classList.toggle('active', hardMode);
+            hardModeToggle.textContent = hardMode ? '💀 HARD ON' : '💀 HARD';
+            renderUpgrades();
+            renderPlanetShop();
+            renderSystemShop();
+            saveGame();
+        });
+
         // Prestige System functions
         const prestigeDisplay = document.getElementById('prestige-display');
         const carbonCreditsDisplay = document.getElementById('carbon-credits');
@@ -2638,7 +2678,8 @@
             systemShop.innerHTML = '';
             solarSystems.forEach((system, index) => {
                 if (index === 0) return; // Skip Sol
-                const canAfford = pollution >= system.cost;
+                const actualCost = getHardCost(system.cost);
+                const canAfford = pollution >= actualCost;
                 const div = document.createElement('div');
                 div.className = 'toxic-upgrade' + (!canAfford && !system.unlocked ? ' disabled' : '') + (system.unlocked ? ' owned' : '');
                 div.setAttribute('data-system-index', index);
@@ -2647,7 +2688,7 @@
                     <div class="name" style="color: #9b30ff;">${system.icon} ${system.name}</div>
                     <div class="desc">${system.description}</div>
                     <div class="desc">x${formatNumber(system.multiplier)} system multiplier</div>
-                    <div class="cost" style="color: #9b30ff;">${system.unlocked ? 'UNLOCKED' : 'Cost: ' + formatNumber(system.cost) + ' tons'}</div>
+                    <div class="cost" style="color: #9b30ff;">${system.unlocked ? 'UNLOCKED' : 'Cost: ' + formatNumber(actualCost) + ' tons'}</div>
                 `;
                 systemShop.appendChild(div);
             });
@@ -2665,8 +2706,9 @@
 
         function buySystem(index) {
             const system = solarSystems[index];
-            if (pollution >= system.cost && !system.unlocked) {
-                pollution -= system.cost;
+            const actualCost = getHardCost(system.cost);
+            if (pollution >= actualCost && !system.unlocked) {
+                pollution -= actualCost;
                 system.unlocked = true;
                 playSound('unlock');
                 newsText.innerHTML = `⭐ <span>${system.name}</span> UNLOCKED! ${system.description}`;
@@ -2823,7 +2865,12 @@
         function getCost(upgrade) {
             const baseCost = Math.floor(upgrade.baseCost * Math.pow(1.15, upgrade.owned));
             const reduction = Math.min(prestigeCostReduction, 0.9); // Max 90% reduction
-            return Math.floor(baseCost * (1 - reduction));
+            const hardMultiplier = hardMode ? hardModeMultiplier : 1;
+            return Math.floor(baseCost * (1 - reduction) * hardMultiplier);
+        }
+
+        function getHardCost(cost) {
+            return hardMode ? cost * hardModeMultiplier : cost;
         }
 
         function formatNumber(num) {
@@ -3011,7 +3058,8 @@
             const currentPlanets = getCurrentSystemPlanets();
             currentPlanets.forEach((planet, index) => {
                 if (index === 0) return; // Skip first planet (always unlocked)
-                const canAfford = pollution >= planet.cost;
+                const actualCost = getHardCost(planet.cost);
+                const canAfford = pollution >= actualCost;
                 const div = document.createElement('div');
                 div.className = 'planet-item' + (!canAfford && !planet.unlocked ? ' disabled' : '') + (planet.unlocked ? ' owned' : '');
                 div.setAttribute('data-planet-index', index);
@@ -3020,7 +3068,7 @@
                         <span><span class="planet-unlock-icon">${planet.icon}</span><span class="planet-unlock-name">${planet.name}</span></span>
                     </div>
                     <div class="planet-desc">x${planet.multiplier} pollution multiplier</div>
-                    <div class="planet-cost">${planet.unlocked ? 'UNLOCKED' : 'Cost: ' + formatNumber(planet.cost) + ' tons'}</div>
+                    <div class="planet-cost">${planet.unlocked ? 'UNLOCKED' : 'Cost: ' + formatNumber(actualCost) + ' tons'}</div>
                 `;
                 planetShop.appendChild(div);
             });
@@ -3040,8 +3088,9 @@
         function buyPlanet(index) {
             const currentPlanets = getCurrentSystemPlanets();
             const planet = currentPlanets[index];
-            if (pollution >= planet.cost && !planet.unlocked) {
-                pollution -= planet.cost;
+            const actualCost = getHardCost(planet.cost);
+            if (pollution >= actualCost && !planet.unlocked) {
+                pollution -= actualCost;
                 planet.unlocked = true;
                 playSound('unlock');
                 renderPlanetTabs();
@@ -3104,7 +3153,8 @@
             items.forEach((item) => {
                 const index = parseInt(item.getAttribute('data-planet-index'));
                 if (!isNaN(index) && currentPlanets[index] && !currentPlanets[index].unlocked) {
-                    const canAfford = pollution >= currentPlanets[index].cost;
+                    const actualCost = getHardCost(currentPlanets[index].cost);
+                    const canAfford = pollution >= actualCost;
                     item.classList.toggle('disabled', !canAfford);
                 }
             });
@@ -3115,7 +3165,8 @@
             items.forEach((item) => {
                 const index = parseInt(item.getAttribute('data-system-index'));
                 if (!isNaN(index) && solarSystems[index] && !solarSystems[index].unlocked) {
-                    const canAfford = pollution >= solarSystems[index].cost;
+                    const actualCost = getHardCost(solarSystems[index].cost);
+                    const canAfford = pollution >= actualCost;
                     item.classList.toggle('disabled', !canAfford);
                 }
             });
@@ -3313,7 +3364,9 @@
                 prestigePrestigeMult: safeNumber(prestigePrestigeMult),
                 prestigeKeepUpgrades: safeNumber(prestigeKeepUpgrades),
                 // Permanent upgrade levels (persist through prestige)
-                upgradeLevels
+                upgradeLevels,
+                // Hard mode
+                hardMode
             };
             localStorage.setItem('pollutionClickerSave', JSON.stringify(saveData));
         }
@@ -3436,6 +3489,11 @@
                 if (data.upgradeLevels) {
                     upgradeLevels = data.upgradeLevels;
                 }
+
+                // Load hard mode
+                hardMode = data.hardMode || false;
+                hardModeToggle.classList.toggle('active', hardMode);
+                hardModeToggle.textContent = hardMode ? '💀 HARD ON' : '💀 HARD';
 
                 soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
             }
