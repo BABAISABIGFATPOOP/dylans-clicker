@@ -2813,6 +2813,12 @@
         }
 
         function formatNumber(num) {
+            if (!isFinite(num)) return '∞ INFINITY';
+            // Beyond Centillion - use scientific notation with fun names
+            if (num >= 1e306) {
+                const exp = Math.floor(Math.log10(num));
+                return (num / Math.pow(10, exp)).toFixed(2) + 'e' + exp + ' (BEYOND)';
+            }
             if (num >= 1e303) return (num / 1e303).toFixed(2) + 'Ce';
             if (num >= 1e300) return (num / 1e300).toFixed(2) + 'NvNg';
             if (num >= 1e297) return (num / 1e297).toFixed(2) + 'OcNg';
