@@ -3474,15 +3474,42 @@
         });
 
         // Keyboard clicking - any letter, space, or enter counts as a click
+        function doClick() {
+            initAudio();
+            const planet = getCurrentPlanet();
+            const system = getCurrentSystem();
+            const clickPower = calculateClickPower();
+            let amount = clickPower * planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * toxicClickMult * toxicPlanetMult * prestigeClickMult * prestigeMultiplier;
+
+            if (Math.random() < prestigeDoubleClickChance) {
+                amount *= 2;
+            }
+
+            pollution += amount;
+            planet.pollution += amount;
+            totalClicks++;
+            totalPollution += amount;
+
+            const rect = globeBtn.getBoundingClientRect();
+            createParticle(rect.left + rect.width / 2 - 20, rect.top + rect.height / 2 - 20, amount);
+
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => createSmoke(), i * 100);
+            }
+
+            playSound('click');
+            updateDisplay();
+        }
+
         document.addEventListener('keydown', (e) => {
             // Check if it's a letter (a-z), space, or enter
-            const isLetter = e.key.length === 1 && e.key.match(/[a-zA-Z]/);
+            const isLetter = e.key.length === 1 && /[a-zA-Z]/.test(e.key);
             const isSpace = e.code === 'Space';
             const isEnter = e.code === 'Enter';
 
             if (isLetter || isSpace || isEnter) {
                 e.preventDefault();
-                globeBtn.click();
+                doClick();
             }
         });
 
