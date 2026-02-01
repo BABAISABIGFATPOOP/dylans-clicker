@@ -3490,6 +3490,31 @@
             }
         }, 100);
 
+        // CEO's Cleaners - steal pollution when you own Deforestation Co.
+        setInterval(() => {
+            const deforestUpgrade = upgrades.find(u => u.id === 'deforest');
+            if (deforestUpgrade && deforestUpgrade.owned > 0) {
+                // Cleaners steal 0.5% of your pollution per second, scaling with how many you own
+                const cleanerRate = 0.005 * deforestUpgrade.owned;
+                const stolen = pollution * cleanerRate / 10; // Divided by 10 since this runs every 100ms
+                if (stolen > 0 && pollution > stolen) {
+                    pollution -= stolen;
+                    // Show cleaner stealing effect occasionally
+                    if (Math.random() < 0.1) {
+                        const floater = document.createElement('div');
+                        floater.className = 'click-effect';
+                        floater.style.left = Math.random() * 80 + 10 + '%';
+                        floater.style.top = Math.random() * 40 + 30 + '%';
+                        floater.style.color = '#00ff00';
+                        floater.textContent = '🧹 -' + formatNumber(stolen * 10);
+                        document.querySelector('.game-container').appendChild(floater);
+                        setTimeout(() => floater.remove(), 1000);
+                    }
+                    updateDisplay();
+                }
+            }
+        }, 100);
+
         // Helper to safely save large numbers as strings
         function safeNumber(num) {
             if (!isFinite(num)) return 'Infinity';
