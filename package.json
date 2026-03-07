@@ -1,0 +1,26 @@
+{
+  "name": "dylans-clicker",
+  "version": "1.0.0",
+  "description": "Pollution Clicker - Desktop Edition",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.dylan.pollutionclicker",
+    "productName": "DylansClicker",
+    "files": [
+      "main.js",
+      "index.html"
+    ],
+    "win": {
+      "target": "portable",
+      "artifactName": "DylansClicker.${ext}"
+    }
+  }
+}

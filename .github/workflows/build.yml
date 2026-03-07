@@ -1,0 +1,60 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Windows exe
+        run: npm run build:win
+
+      - name: Upload exe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: dist/DylansClicker.exe
+
+  build-zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create zip
+        run: zip DylansClicker.zip index.html
+
+      - name: Upload zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-zip
+          path: DylansClicker.zip
+
+  release:
+    needs: [build-windows, build-zip]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            windows-exe/DylansClicker.exe
+            html-zip/DylansClicker.zip
+          generate_release_notes: true
