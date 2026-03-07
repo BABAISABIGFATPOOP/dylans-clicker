@@ -184,7 +184,7 @@
             border-color: #888;
         }
 
-        .hard-mode-toggle {
+        .difficulty-selector {
             position: fixed;
             bottom: 80px;
             right: 20px;
@@ -197,16 +197,30 @@
             transition: all 0.2s;
             z-index: 100;
             color: #888;
+            appearance: none;
+            -webkit-appearance: none;
+            outline: none;
         }
 
-        .hard-mode-toggle:hover {
+        .difficulty-selector:hover {
             border-color: #888;
         }
 
-        .hard-mode-toggle.active {
+        .difficulty-selector.hard {
             border-color: #ff4444;
             color: #ff4444;
             background: rgba(255, 0, 0, 0.2);
+        }
+
+        .difficulty-selector.easy {
+            border-color: #44ff44;
+            color: #44ff44;
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .difficulty-selector option {
+            background: #1a1a2e;
+            color: #ccc;
         }
 
         .prestige-display {
@@ -955,7 +969,10 @@
         <div class="timer" id="toxic-timer">Growing...</div>
     </div>
     <button class="sound-toggle" id="sound-toggle" title="Toggle Sound">🔊</button>
-    <button class="hard-mode-toggle" id="hard-mode-toggle" title="Toggle Hard Mode (100x harder)">💀 HARD</button>
+    <select class="difficulty-selector" id="difficulty-selector" title="Select Difficulty">
+        <option value="easy">😊 EASY</option>
+        <option value="hard">💀 HARD</option>
+    </select>
     <div class="prestige-display" id="prestige-display" title="Click to Rebirth!">
         <span class="icon">💎</span>
         <div class="count"><span id="carbon-credits">0</span> Carbon Credits</div>
@@ -2368,16 +2385,27 @@
             systemToggle.textContent = solarSystemBar.classList.contains('collapsed') ? '▶' : '▼';
         });
 
-        // Hard mode toggle
-        const hardModeToggle = document.getElementById('hard-mode-toggle');
-        hardModeToggle.addEventListener('click', () => {
+        // Difficulty selector
+        const difficultySelector = document.getElementById('difficulty-selector');
+
+        function updateDifficultyStyle() {
+            difficultySelector.classList.remove('easy', 'hard');
+            difficultySelector.classList.add(hardMode ? 'hard' : 'easy');
+        }
+
+        difficultySelector.addEventListener('change', () => {
+            const newMode = difficultySelector.value;
+            const wasHard = hardMode;
+            const isNowHard = newMode === 'hard';
+
+            if (wasHard === isNowHard) return;
+
             // Save current progress before switching
             saveGame();
 
-            // Toggle mode
-            hardMode = !hardMode;
-            hardModeToggle.classList.toggle('active', hardMode);
-            hardModeToggle.textContent = hardMode ? '💀 HARD ON' : '💀 HARD';
+            // Switch mode
+            hardMode = isNowHard;
+            updateDifficultyStyle();
 
             // Check if we have a save for the new mode
             const newSaveKey = getSaveKey();
@@ -3670,9 +3698,9 @@
             const savedMode = localStorage.getItem('pollutionClickerMode');
             if (savedMode === 'hard') {
                 hardMode = true;
-                hardModeToggle.classList.add('active');
-                hardModeToggle.textContent = '💀 HARD ON';
+                difficultySelector.value = 'hard';
             }
+            updateDifficultyStyle();
 
             const saved = localStorage.getItem(getSaveKey());
             if (saved) {
