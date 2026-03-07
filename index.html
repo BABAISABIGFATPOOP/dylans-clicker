@@ -218,6 +218,12 @@
             background: rgba(0, 255, 0, 0.1);
         }
 
+        .difficulty-selector.impossible {
+            border-color: #f08c28;
+            color: #f08c28;
+            background: rgba(240, 140, 40, 0.2);
+        }
+
         .difficulty-selector option {
             background: #1a1a2e;
             color: #ccc;
@@ -956,9 +962,269 @@
                 margin: 20px;
             }
         }
+        /* Main Menu Overlay */
+        #main-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #14141e;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        #main-menu.hidden {
+            display: none;
+        }
+
+        #main-menu h1 {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            letter-spacing: 2px;
+        }
+
+        #main-menu .menu-subtitle {
+            color: #888;
+            font-size: 1.1rem;
+            margin-bottom: 50px;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            width: 320px;
+        }
+
+        .menu-btn {
+            padding: 16px 32px;
+            font-size: 1.3rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            border: 3px solid;
+            border-radius: 12px;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.25s;
+            letter-spacing: 1px;
+        }
+
+        .menu-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .menu-btn.easy {
+            color: #32c850;
+            border-color: #32c850;
+        }
+
+        .menu-btn.easy:hover {
+            background: rgba(50, 200, 80, 0.15);
+            box-shadow: 0 0 25px rgba(50, 200, 80, 0.4);
+        }
+
+        .menu-btn.hard {
+            color: #dc3232;
+            border-color: #dc3232;
+        }
+
+        .menu-btn.hard:hover {
+            background: rgba(220, 50, 50, 0.15);
+            box-shadow: 0 0 25px rgba(220, 50, 50, 0.4);
+        }
+
+        .menu-btn.impossible {
+            color: #f08c28;
+            border-color: #f08c28;
+        }
+
+        .menu-btn.impossible:hover {
+            background: rgba(240, 140, 40, 0.15);
+            box-shadow: 0 0 25px rgba(240, 140, 40, 0.4);
+        }
+
+        .menu-esc-hint {
+            position: fixed;
+            bottom: 30px;
+            color: #555;
+            font-size: 0.85rem;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Auth UI Styles */
+        #auth-section {
+            width: 320px;
+            margin-bottom: 30px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        #auth-signed-out {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #auth-signed-in {
+            display: none;
+            text-align: center;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        #auth-signed-in.active {
+            display: flex;
+        }
+
+        #auth-signed-out.hidden {
+            display: none;
+        }
+
+        .auth-input {
+            padding: 10px 14px;
+            font-size: 0.95rem;
+            font-family: 'Courier New', Courier, monospace;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .auth-input:focus {
+            border-color: #6c63ff;
+        }
+
+        .auth-input::placeholder {
+            color: #666;
+        }
+
+        .auth-btn-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .auth-btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 0.85rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            border: 2px solid #6c63ff;
+            border-radius: 8px;
+            background: transparent;
+            color: #6c63ff;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+        }
+
+        .auth-btn:hover {
+            background: rgba(108, 99, 255, 0.15);
+            box-shadow: 0 0 15px rgba(108, 99, 255, 0.3);
+        }
+
+        .auth-btn.google {
+            border-color: #ea4335;
+            color: #ea4335;
+        }
+
+        .auth-btn.google:hover {
+            background: rgba(234, 67, 53, 0.15);
+            box-shadow: 0 0 15px rgba(234, 67, 53, 0.3);
+        }
+
+        .auth-btn.signout {
+            border-color: #888;
+            color: #888;
+        }
+
+        .auth-btn.signout:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        #auth-user-email {
+            color: #6c63ff;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+
+        #auth-error {
+            color: #ff4444;
+            font-size: 0.8rem;
+            min-height: 1.2em;
+            text-align: center;
+        }
+
+        .menu-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .auth-divider {
+            text-align: center;
+            color: #555;
+            font-size: 0.8rem;
+            margin: 2px 0;
+        }
+
+        .update-btn {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            margin-top: 30px;
+            color: #6c63ff;
+            border-color: #6c63ff;
+            font-size: 1rem;
+            width: 320px;
+        }
+
+        .update-btn:hover {
+            background: rgba(108, 99, 255, 0.15);
+            box-shadow: 0 0 25px rgba(108, 99, 255, 0.4);
+        }
     </style>
 </head>
 <body>
+    <div id="main-menu">
+        <h1>Pollution Clicker</h1>
+        <div class="menu-subtitle">Sign in to enable cloud saves</div>
+
+        <div id="auth-section">
+            <div id="auth-signed-out">
+                <input type="email" class="auth-input" id="auth-email" placeholder="Email" autocomplete="email">
+                <input type="password" class="auth-input" id="auth-password" placeholder="Password" autocomplete="current-password">
+                <div class="auth-btn-row">
+                    <button class="auth-btn" id="btn-sign-in">SIGN IN</button>
+                    <button class="auth-btn" id="btn-sign-up">SIGN UP</button>
+                </div>
+                <div class="auth-divider">— or —</div>
+                <button class="auth-btn google" id="btn-google">SIGN IN WITH GOOGLE</button>
+                <div id="auth-error"></div>
+            </div>
+            <div id="auth-signed-in">
+                <div id="auth-user-email"></div>
+                <button class="auth-btn signout" id="btn-sign-out">SIGN OUT</button>
+            </div>
+        </div>
+
+        <div class="menu-subtitle">Select difficulty to start</div>
+        <div class="menu-buttons">
+            <button class="menu-btn easy" data-difficulty="easy" disabled>EASY</button>
+            <button class="menu-btn hard" data-difficulty="hard" disabled>HARD</button>
+            <button class="menu-btn impossible" data-difficulty="impossible" disabled>IMPOSSIBLE</button>
+        </div>
+        <a href="https://github.com/BABAISABIGFATPOOP/dylans-clicker" target="_blank" class="menu-btn update-btn">UPDATE</a>
+    </div>
     <div class="news-ticker">
         <div class="news-label">NEWS</div>
         <div class="news-text" id="news-text">Welcome to Earth. The air is still breathable... for now.</div>
@@ -972,6 +1238,7 @@
     <select class="difficulty-selector" id="difficulty-selector" title="Select Difficulty">
         <option value="easy">😊 EASY</option>
         <option value="hard">💀 HARD</option>
+        <option value="impossible">🔥 IMPOSSIBLE</option>
     </select>
     <div class="prestige-display" id="prestige-display" title="Click to Rebirth!">
         <span class="icon">💎</span>
@@ -1054,7 +1321,40 @@
         <div style="border-top: 1px solid #ffd700; margin-top: 8px; padding-top: 8px; color: #ffd700;">Rebirths: <span id="times-prestiged">0</span></div>
     </div>
 
+    <!-- Firebase SDK (compat v10) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
     <script>
+        // ====== Firebase Config ======
+        // PASTE YOUR FIREBASE CONFIG BELOW (from Firebase Console → Project Settings → Web App)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDkamTU1XsidPfYq9IGKKIhFh7ymM1BgjY",
+            authDomain: "clicker-sign-in.firebaseapp.com",
+            projectId: "clicker-sign-in",
+            storageBucket: "clicker-sign-in.firebasestorage.app",
+            messagingSenderId: "381074645572",
+            appId: "1:381074645572:web:6ad68c61fa49c98c89d211"
+        };
+
+        // Initialize Firebase (gracefully skip if config not set)
+        let firebaseReady = false;
+        let db = null;
+        let auth = null;
+        let googleProvider = null;
+        try {
+            if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+                firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.firestore();
+                googleProvider = new firebase.auth.GoogleAuthProvider();
+                firebaseReady = true;
+            }
+        } catch (e) {
+            console.warn('Firebase init failed, using localStorage only:', e);
+        }
+
         // Helper function to create planet color gradients
         function createPlanetColors(baseColor, midColor, dirtyColor, deadColor) {
             return {
@@ -1791,7 +2091,9 @@
         // Sound System
         let soundEnabled = true;
         let hardMode = false;
+        let impossibleMode = false;
         const hardModeMultiplier = 500; // Everything is 500x harder
+        const impossibleModeMultiplier = 2000; // Everything is 2000x harder
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
 
@@ -2389,22 +2691,23 @@
         const difficultySelector = document.getElementById('difficulty-selector');
 
         function updateDifficultyStyle() {
-            difficultySelector.classList.remove('easy', 'hard');
-            difficultySelector.classList.add(hardMode ? 'hard' : 'easy');
+            difficultySelector.classList.remove('easy', 'hard', 'impossible');
+            difficultySelector.classList.add(impossibleMode ? 'impossible' : hardMode ? 'hard' : 'easy');
         }
 
         difficultySelector.addEventListener('change', () => {
             const newMode = difficultySelector.value;
-            const wasHard = hardMode;
             const isNowHard = newMode === 'hard';
+            const isNowImpossible = newMode === 'impossible';
 
-            if (wasHard === isNowHard) return;
+            if (hardMode === isNowHard && impossibleMode === isNowImpossible) return;
 
             // Save current progress before switching
             saveGame();
 
             // Switch mode
             hardMode = isNowHard;
+            impossibleMode = isNowImpossible;
             updateDifficultyStyle();
 
             // Check if we have a save for the new mode
@@ -2503,7 +2806,7 @@
             }
 
             // Save the mode switch
-            localStorage.setItem('pollutionClickerMode', hardMode ? 'hard' : 'normal');
+            localStorage.setItem('pollutionClickerMode', impossibleMode ? 'impossible' : hardMode ? 'hard' : 'normal');
 
             // Re-render everything
             renderUpgrades();
@@ -3034,15 +3337,17 @@
         function getCost(upgrade) {
             const baseCost = Math.floor(upgrade.baseCost * Math.pow(1.15, upgrade.owned));
             const reduction = Math.min(prestigeCostReduction, 0.9); // Max 90% reduction
-            const hardMultiplier = hardMode ? hardModeMultiplier : 1;
-            return Math.floor(baseCost * (1 - reduction) * hardMultiplier);
+            const diffMultiplier = impossibleMode ? impossibleModeMultiplier : hardMode ? hardModeMultiplier : 1;
+            return Math.floor(baseCost * (1 - reduction) * diffMultiplier);
         }
 
         function getHardCost(cost) {
+            if (impossibleMode) return cost * impossibleModeMultiplier;
             return hardMode ? cost * hardModeMultiplier : cost;
         }
 
         function getSaveKey() {
+            if (impossibleMode) return 'pollutionClickerSaveImpossible';
             return hardMode ? 'pollutionClickerSaveHard' : 'pollutionClickerSave';
         }
 
@@ -3685,19 +3990,27 @@
                 prestigeKeepUpgrades: safeNumber(prestigeKeepUpgrades),
                 // Permanent upgrade levels (persist through prestige)
                 upgradeLevels,
-                // Hard mode
-                hardMode
+                // Difficulty mode
+                hardMode,
+                impossibleMode
             };
             localStorage.setItem(getSaveKey(), JSON.stringify(saveData));
             // Also save which mode we're in
-            localStorage.setItem('pollutionClickerMode', hardMode ? 'hard' : 'normal');
+            localStorage.setItem('pollutionClickerMode', impossibleMode ? 'impossible' : hardMode ? 'hard' : 'normal');
+            // Cloud save (debounced)
+            cloudSave();
         }
 
         function loadGame() {
             // First check which mode we should load
             const savedMode = localStorage.getItem('pollutionClickerMode');
-            if (savedMode === 'hard') {
+            if (savedMode === 'impossible') {
+                impossibleMode = true;
+                hardMode = false;
+                difficultySelector.value = 'impossible';
+            } else if (savedMode === 'hard') {
                 hardMode = true;
+                impossibleMode = false;
                 difficultySelector.value = 'hard';
             }
             updateDifficultyStyle();
@@ -4129,24 +4442,274 @@
         // Update news every 15 seconds
         setInterval(updateNews, 15000);
 
-        // Initialize
-        loadGame();
-        const planet = getCurrentPlanet();
-        const initSystem = getCurrentSystem();
-        planetNameDisplay.textContent = planet.name;
-        currentPlanetNameDisplay.textContent = planet.name;
-        const initTotalMult = planet.multiplier * prestigePlanetBoost * initSystem.multiplier * prestigeSystemBoost * prestigeMultiplier;
-        multiplierDisplay.textContent = `Multiplier: x${formatNumber(initTotalMult)}`;
-        planetsDestroyedDisplay.textContent = planetsDestroyed;
-        renderPlanetTabs();
-        renderUpgrades();
-        renderPlanetShop();
-        renderToxicShop();
-        renderSystemButtons();
-        renderSystemShop();
-        updateToxicWaste();
-        updatePrestigeDisplay();
-        updateDisplay();
+        // ====== Firebase Auth & Cloud Saves ======
+        let lastCloudSaveTime = 0;
+        const CLOUD_SAVE_INTERVAL = 30000; // 30s debounce
+
+        function getFirestoreSaveKey() {
+            if (impossibleMode) return 'impossible';
+            return hardMode ? 'hard' : 'easy';
+        }
+
+        async function cloudSave() {
+            if (!firebaseReady || !auth || !auth.currentUser) return;
+            const now = Date.now();
+            if (now - lastCloudSaveTime < CLOUD_SAVE_INTERVAL) return;
+            lastCloudSaveTime = now;
+            try {
+                const saveData = localStorage.getItem(getSaveKey());
+                if (!saveData) return;
+                await db.collection('users').doc(auth.currentUser.uid)
+                    .collection('saves').doc(getFirestoreSaveKey())
+                    .set({ data: saveData, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+            } catch (e) {
+                console.warn('Cloud save failed:', e);
+            }
+        }
+
+        async function cloudSaveForce() {
+            if (!firebaseReady || !auth || !auth.currentUser) return;
+            try {
+                const saveData = localStorage.getItem(getSaveKey());
+                if (!saveData) return;
+                await db.collection('users').doc(auth.currentUser.uid)
+                    .collection('saves').doc(getFirestoreSaveKey())
+                    .set({ data: saveData, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+            } catch (e) {
+                console.warn('Cloud save failed:', e);
+            }
+        }
+
+        async function cloudLoad(mode) {
+            if (!firebaseReady || !auth || !auth.currentUser) return null;
+            try {
+                const docKey = mode === 'impossible' ? 'impossible' : mode === 'hard' ? 'hard' : 'easy';
+                const doc = await db.collection('users').doc(auth.currentUser.uid)
+                    .collection('saves').doc(docKey).get();
+                if (doc.exists && doc.data().data) {
+                    return doc.data().data;
+                }
+            } catch (e) {
+                console.warn('Cloud load failed:', e);
+            }
+            return null;
+        }
+
+        async function loadAllCloudSaves() {
+            if (!firebaseReady || !auth || !auth.currentUser) return;
+            try {
+                const modes = [
+                    { doc: 'easy', key: 'pollutionClickerSave' },
+                    { doc: 'hard', key: 'pollutionClickerSaveHard' },
+                    { doc: 'impossible', key: 'pollutionClickerSaveImpossible' }
+                ];
+                for (const m of modes) {
+                    const doc = await db.collection('users').doc(auth.currentUser.uid)
+                        .collection('saves').doc(m.doc).get();
+                    if (doc.exists && doc.data().data) {
+                        localStorage.setItem(m.key, doc.data().data);
+                    }
+                }
+            } catch (e) {
+                console.warn('Cloud load all failed:', e);
+            }
+        }
+
+        function showAuthError(msg) {
+            const el = document.getElementById('auth-error');
+            if (el) el.textContent = msg;
+        }
+
+        function clearAuthError() {
+            const el = document.getElementById('auth-error');
+            if (el) el.textContent = '';
+        }
+
+        async function signInWithEmail() {
+            if (!firebaseReady) return showAuthError('Firebase not configured');
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            if (!email || !password) return showAuthError('Enter email and password');
+            clearAuthError();
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+            } catch (e) {
+                showAuthError(e.message.replace('Firebase: ', ''));
+            }
+        }
+
+        async function signUpWithEmail() {
+            if (!firebaseReady) return showAuthError('Firebase not configured');
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            if (!email || !password) return showAuthError('Enter email and password');
+            clearAuthError();
+            try {
+                await auth.createUserWithEmailAndPassword(email, password);
+            } catch (e) {
+                showAuthError(e.message.replace('Firebase: ', ''));
+            }
+        }
+
+        async function signInWithGoogle() {
+            if (!firebaseReady) return showAuthError('Firebase not configured');
+            clearAuthError();
+            try {
+                await auth.signInWithPopup(googleProvider);
+            } catch (e) {
+                if (e.code !== 'auth/popup-closed-by-user') {
+                    showAuthError(e.message.replace('Firebase: ', ''));
+                }
+            }
+        }
+
+        async function signOutUser() {
+            if (!firebaseReady || !auth) return;
+            if (gameStarted) {
+                saveGame();
+                await cloudSaveForce();
+            }
+            try {
+                await auth.signOut();
+            } catch (e) {
+                console.warn('Sign out error:', e);
+            }
+            returnToMenu();
+        }
+
+        function setMenuButtonsEnabled(enabled) {
+            document.querySelectorAll('.menu-btn').forEach(btn => {
+                btn.disabled = !enabled;
+            });
+        }
+
+        function updateAuthUI(user) {
+            const signedOut = document.getElementById('auth-signed-out');
+            const signedIn = document.getElementById('auth-signed-in');
+            const emailDisplay = document.getElementById('auth-user-email');
+
+            if (user) {
+                signedOut.classList.add('hidden');
+                signedIn.classList.add('active');
+                emailDisplay.textContent = user.email || user.displayName || 'Signed In';
+                setMenuButtonsEnabled(true);
+            } else {
+                signedOut.classList.remove('hidden');
+                signedIn.classList.remove('active');
+                emailDisplay.textContent = '';
+                setMenuButtonsEnabled(false);
+                clearAuthError();
+            }
+        }
+
+        // Listen for auth state changes
+        if (firebaseReady && auth) {
+            auth.onAuthStateChanged(async (user) => {
+                updateAuthUI(user);
+                if (user) {
+                    await loadAllCloudSaves();
+                }
+            });
+        } else {
+            // No Firebase — enable buttons so game works offline
+            setMenuButtonsEnabled(true);
+            const authSection = document.getElementById('auth-section');
+            if (authSection) authSection.style.display = 'none';
+        }
+
+        // Auth button event listeners
+        document.getElementById('btn-sign-in').addEventListener('click', signInWithEmail);
+        document.getElementById('btn-sign-up').addEventListener('click', signUpWithEmail);
+        document.getElementById('btn-google').addEventListener('click', signInWithGoogle);
+        document.getElementById('btn-sign-out').addEventListener('click', signOutUser);
+
+        // Allow Enter key to sign in from password field
+        document.getElementById('auth-password').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') signInWithEmail();
+        });
+
+        // ====== Main Menu System ======
+        const mainMenu = document.getElementById('main-menu');
+        const gameContent = document.querySelectorAll('body > :not(#main-menu):not(script)');
+        let gameStarted = false;
+
+        function hideGameContent() {
+            gameContent.forEach(el => el.style.display = 'none');
+        }
+
+        function showGameContent() {
+            gameContent.forEach(el => el.style.display = '');
+        }
+
+        function initializeGame() {
+            loadGame();
+            const planet = getCurrentPlanet();
+            const initSystem = getCurrentSystem();
+            planetNameDisplay.textContent = planet.name;
+            currentPlanetNameDisplay.textContent = planet.name;
+            const initTotalMult = planet.multiplier * prestigePlanetBoost * initSystem.multiplier * prestigeSystemBoost * prestigeMultiplier;
+            multiplierDisplay.textContent = `Multiplier: x${formatNumber(initTotalMult)}`;
+            planetsDestroyedDisplay.textContent = planetsDestroyed;
+            renderPlanetTabs();
+            renderUpgrades();
+            renderPlanetShop();
+            renderToxicShop();
+            renderSystemButtons();
+            renderSystemShop();
+            updateToxicWaste();
+            updatePrestigeDisplay();
+            updateDisplay();
+        }
+
+        function startGame(difficulty) {
+            // Set mode
+            hardMode = difficulty === 'hard';
+            impossibleMode = difficulty === 'impossible';
+            difficultySelector.value = difficulty;
+            updateDifficultyStyle();
+            localStorage.setItem('pollutionClickerMode', impossibleMode ? 'impossible' : hardMode ? 'hard' : 'normal');
+
+            // If game was already started, save current before switching
+            if (gameStarted) {
+                saveGame();
+            }
+
+            // Reset state then load the correct save
+            resetGameState();
+            initializeGame();
+
+            // Show game, hide menu
+            mainMenu.classList.add('hidden');
+            showGameContent();
+            gameStarted = true;
+        }
+
+        function returnToMenu() {
+            if (gameStarted) {
+                saveGame();
+            }
+            mainMenu.classList.remove('hidden');
+            hideGameContent();
+        }
+
+        // Menu button clicks
+        document.querySelectorAll('.menu-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                startGame(btn.dataset.difficulty);
+            });
+        });
+
+        // ESC key to return to menu
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (mainMenu.classList.contains('hidden')) {
+                    returnToMenu();
+                }
+            }
+        });
+
+        // On page load: show menu, hide game
+        hideGameContent();
 
         // Update prestige display every 2 seconds
         setInterval(updatePrestigeDisplay, 2000);
