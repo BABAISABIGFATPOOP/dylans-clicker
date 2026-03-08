@@ -3870,6 +3870,10 @@
         }
 
         document.addEventListener('keydown', (e) => {
+            // Don't capture keys when typing in an input field
+            const tag = document.activeElement.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
             // Check if it's a letter (a-z), space, or enter
             const isLetter = e.key.length === 1 && /[a-zA-Z]/.test(e.key);
             const isSpace = e.code === 'Space';
