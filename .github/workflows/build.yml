@@ -21,12 +21,16 @@ jobs:
 
       - name: Build Windows exe
         run: npm run build:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload exe artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-exe
-          path: dist/DylansClicker.exe
+          path: |
+            dist/*.exe
+            dist/latest.yml
 
   build-zip:
     runs-on: ubuntu-latest
@@ -55,6 +59,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            windows-exe/DylansClicker.exe
+            windows-exe/*.exe
+            windows-exe/latest.yml
             html-zip/DylansClicker.zip
           generate_release_notes: true

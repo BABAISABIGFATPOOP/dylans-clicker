@@ -7,6 +7,9 @@
     "start": "electron .",
     "build:win": "electron-builder --win --x64"
   },
+  "dependencies": {
+    "electron-updater": "^6.1.0"
+  },
   "devDependencies": {
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0"
@@ -16,14 +19,21 @@
     "productName": "DylansClicker",
     "files": [
       "main.js",
+      "preload.js",
       "index.html",
       "icon.ico",
       "icon.png"
     ],
     "win": {
-      "target": "portable",
-      "icon": "icon.ico",
-      "artifactName": "DylansClicker.${ext}"
-    }
+      "target": "nsis",
+      "icon": "icon.ico"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "BABAISABIGFATPOOP",
+        "repo": "dylans-clicker"
+      }
+    ]
   }
 }

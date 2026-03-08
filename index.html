@@ -1189,7 +1189,12 @@
             width: 320px;
         }
 
-        .update-btn:hover {
+        .update-btn:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+
+        .update-btn:hover:not(:disabled) {
             background: rgba(108, 99, 255, 0.15);
             box-shadow: 0 0 25px rgba(108, 99, 255, 0.4);
         }
@@ -1224,7 +1229,7 @@
             <button class="menu-btn hard" data-difficulty="hard" disabled>HARD</button>
             <button class="menu-btn impossible" data-difficulty="impossible" disabled>IMPOSSIBLE</button>
         </div>
-        <a href="https://github.com/BABAISABIGFATPOOP/dylans-clicker/releases" target="_blank" class="menu-btn update-btn">UPDATE — v1.1.1</a>
+        <button class="menu-btn update-btn" id="update-btn">UPDATE — v1.1.1</button>
     </div>
     <div class="news-ticker">
         <div class="news-label">NEWS</div>
@@ -4718,6 +4723,57 @@
 
         // Update prestige display every 2 seconds
         setInterval(updatePrestigeDisplay, 2000);
+
+        // ====== Auto-Update ======
+        const updateBtn = document.getElementById('update-btn');
+
+        if (window.electronUpdater) {
+            // Set version from app
+            window.electronUpdater.getAppVersion().then(v => {
+                updateBtn.textContent = 'UPDATE — v' + v;
+            });
+
+            updateBtn.addEventListener('click', () => {
+                updateBtn.textContent = 'Checking...';
+                updateBtn.disabled = true;
+                window.electronUpdater.checkForUpdates();
+            });
+
+            window.electronUpdater.onUpdateStatus((status) => {
+                switch (status.state) {
+                    case 'checking':
+                        updateBtn.textContent = 'Checking for updates...';
+                        break;
+                    case 'available':
+                        updateBtn.textContent = 'Downloading v' + status.version + '...';
+                        break;
+                    case 'downloading':
+                        updateBtn.textContent = 'Downloading... ' + status.percent + '%';
+                        break;
+                    case 'downloaded':
+                        updateBtn.textContent = 'Restarting to update...';
+                        break;
+                    case 'up-to-date':
+                        updateBtn.textContent = 'Up to date ✓';
+                        setTimeout(() => {
+                            window.electronUpdater.getAppVersion().then(v => {
+                                updateBtn.textContent = 'UPDATE — v' + v;
+                            });
+                            updateBtn.disabled = false;
+                        }, 5000);
+                        break;
+                    case 'error':
+                        updateBtn.textContent = 'Update failed — retry?';
+                        updateBtn.disabled = false;
+                        break;
+                }
+            });
+        } else {
+            // Fallback for browser: open releases page
+            updateBtn.addEventListener('click', () => {
+                window.open('https://github.com/BABAISABIGFATPOOP/dylans-clicker/releases', '_blank');
+            });
+        }
     </script>
 </body>
 </html>
