@@ -5,6 +5,7 @@ app.whenReady().then(() => {
   const win = new BrowserWindow({
     fullscreen: true,
     frame: false,
+    icon: path.join(__dirname, "icon.ico"),
     webPreferences: {
       contextIsolation: true,
     },

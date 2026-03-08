@@ -16,10 +16,13 @@
     "productName": "DylansClicker",
     "files": [
       "main.js",
-      "index.html"
+      "index.html",
+      "icon.ico",
+      "icon.png"
     ],
     "win": {
       "target": "portable",
+      "icon": "icon.ico",
       "artifactName": "DylansClicker.${ext}"
     }
   }
