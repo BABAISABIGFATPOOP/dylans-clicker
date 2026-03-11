@@ -5,8 +5,11 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
-  build-windows:
+  build-and-release:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,47 +22,16 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Windows exe
-        run: npm run build:win
+      - name: Build and publish Windows exe
+        run: npx electron-builder --win --x64 --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload exe artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-exe
-          path: |
-            dist/*.exe
-            dist/latest.yml
+      - name: Create web zip
+        run: Compress-Archive -Path index.html -DestinationPath DylansClicker.zip
+        shell: pwsh
 
-  build-zip:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Create zip
-        run: zip DylansClicker.zip index.html
-
-      - name: Upload zip artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: html-zip
-          path: DylansClicker.zip
-
-  release:
-    needs: [build-windows, build-zip]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-
-      - name: Create GitHub Release
+      - name: Upload zip to release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            windows-exe/*.exe
-            windows-exe/latest.yml
-            html-zip/DylansClicker.zip
-          generate_release_notes: true
+          files: DylansClicker.zip
