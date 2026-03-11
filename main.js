@@ -53,6 +53,9 @@ app.whenReady().then(() => {
   autoUpdater.on("error", (err) => {
     win.webContents.send("update-status", { state: "error", message: err.message });
   });
+
+  // Auto-check for updates on launch
+  autoUpdater.checkForUpdatesAndNotify();
 });
 
 ipcMain.handle("check-for-updates", () => {
