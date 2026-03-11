@@ -1332,6 +1332,165 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
+<script>
+    // ===== Lightweight Decimal class for huge numbers =====
+    class Decimal {
+        constructor(val) {
+            if (val instanceof Decimal) {
+                this.m = val.m; this.e = val.e;
+            } else if (typeof val === 'string') {
+                if (val === 'Infinity' || val === 'inf') { this.m = Infinity; this.e = 0; return; }
+                if (val.includes('e') || val.includes('E')) {
+                    const parts = val.split(/[eE]/);
+                    let m = parseFloat(parts[0]);
+                    let e = parseInt(parts[1]) || 0;
+                    if (m === 0) { this.m = 0; this.e = 0; return; }
+                    const adj = Math.floor(Math.log10(Math.abs(m)));
+                    this.m = m / Math.pow(10, adj);
+                    this.e = e + adj;
+                } else {
+                    const n = parseFloat(val);
+                    if (!isFinite(n) || n === 0) { this.m = n === 0 ? 0 : n; this.e = 0; return; }
+                    const e2 = Math.floor(Math.log10(Math.abs(n)));
+                    this.m = n / Math.pow(10, e2);
+                    this.e = e2;
+                }
+            } else if (typeof val === 'number') {
+                if (!isFinite(val) || val === 0) { this.m = val === 0 ? 0 : val; this.e = 0; return; }
+                const e2 = Math.floor(Math.log10(Math.abs(val)));
+                this.m = val / Math.pow(10, e2);
+                this.e = e2;
+            } else {
+                this.m = 0; this.e = 0;
+            }
+            this._normalize();
+        }
+        _normalize() {
+            if (this.m === 0 || !isFinite(this.m)) { if(this.m === 0) this.e = 0; return; }
+            while (Math.abs(this.m) >= 10) { this.m /= 10; this.e++; }
+            while (Math.abs(this.m) < 1 && this.m !== 0) { this.m *= 10; this.e--; }
+        }
+        static from(val) {
+            if (val instanceof Decimal) return val;
+            return new Decimal(val);
+        }
+        static zero() { return new Decimal(0); }
+        add(other) {
+            other = Decimal.from(other);
+            if (this.m === 0) return new Decimal(other);
+            if (other.m === 0) return new Decimal(this);
+            if (!isFinite(this.m)) return new Decimal(this);
+            if (!isFinite(other.m)) return new Decimal(other);
+            const diff = this.e - other.e;
+            if (diff > 15) return new Decimal(this);
+            if (diff < -15) return new Decimal(other);
+            const r = new Decimal(0);
+            if (diff >= 0) {
+                r.m = this.m + other.m / Math.pow(10, diff);
+                r.e = this.e;
+            } else {
+                r.m = this.m / Math.pow(10, -diff) + other.m;
+                r.e = other.e;
+            }
+            r._normalize();
+            return r;
+        }
+        sub(other) {
+            other = Decimal.from(other);
+            const neg = new Decimal(0);
+            neg.m = -other.m; neg.e = other.e;
+            return this.add(neg);
+        }
+        mul(other) {
+            other = Decimal.from(other);
+            const r = new Decimal(0);
+            r.m = this.m * other.m;
+            r.e = this.e + other.e;
+            r._normalize();
+            return r;
+        }
+        div(other) {
+            other = Decimal.from(other);
+            if (other.m === 0) return new Decimal(Infinity);
+            const r = new Decimal(0);
+            r.m = this.m / other.m;
+            r.e = this.e - other.e;
+            r._normalize();
+            return r;
+        }
+        pow(exp) {
+            if (typeof exp !== 'number') exp = Decimal.from(exp).toNumber();
+            if (exp === 0) return new Decimal(1);
+            if (this.m === 0) return new Decimal(0);
+            const log10 = Math.log10(Math.abs(this.m)) + this.e;
+            const newLog = log10 * exp;
+            const newE = Math.floor(newLog);
+            const newM = Math.pow(10, newLog - newE);
+            const r = new Decimal(0);
+            r.m = (this.m < 0 && exp % 2 !== 0) ? -newM : newM;
+            r.e = newE;
+            r._normalize();
+            return r;
+        }
+        sqrt() {
+            if (this.m <= 0) return new Decimal(0);
+            return this.pow(0.5);
+        }
+        floor() {
+            if (this.e < 0) return new Decimal(0);
+            if (this.e >= 15) return new Decimal(this);
+            return new Decimal(Math.floor(this.toNumber()));
+        }
+        ceil() {
+            if (this.e < 0) return new Decimal(1);
+            if (this.e >= 15) return new Decimal(this);
+            return new Decimal(Math.ceil(this.toNumber()));
+        }
+        min(other) { other = Decimal.from(other); return this.lte(other) ? new Decimal(this) : new Decimal(other); }
+        max(other) { other = Decimal.from(other); return this.gte(other) ? new Decimal(this) : new Decimal(other); }
+        abs() { const r = new Decimal(this); r.m = Math.abs(r.m); return r; }
+        neg() { const r = new Decimal(this); r.m = -r.m; return r; }
+        gt(other) { other = Decimal.from(other); return this._cmp(other) > 0; }
+        gte(other) { other = Decimal.from(other); return this._cmp(other) >= 0; }
+        lt(other) { other = Decimal.from(other); return this._cmp(other) < 0; }
+        lte(other) { other = Decimal.from(other); return this._cmp(other) <= 0; }
+        eq(other) { other = Decimal.from(other); return this._cmp(other) === 0; }
+        neq(other) { return !this.eq(other); }
+        isZero() { return this.m === 0; }
+        isInfinite() { return !isFinite(this.m); }
+        isPositive() { return this.m > 0; }
+        isNegative() { return this.m < 0; }
+        _cmp(other) {
+            if (this.m === 0 && other.m === 0) return 0;
+            if (this.m > 0 && other.m <= 0) return 1;
+            if (this.m <= 0 && other.m > 0) return -1;
+            if (this.m > 0) {
+                if (this.e !== other.e) return this.e > other.e ? 1 : -1;
+                return this.m > other.m ? 1 : this.m < other.m ? -1 : 0;
+            }
+            if (this.e !== other.e) return this.e > other.e ? -1 : 1;
+            return this.m > other.m ? 1 : this.m < other.m ? -1 : 0;
+        }
+        toNumber() {
+            if (this.e > 308) return this.m > 0 ? Infinity : -Infinity;
+            if (this.e < -324) return 0;
+            return this.m * Math.pow(10, this.e);
+        }
+        toJSON() { return this.toString(); }
+        toString() {
+            if (!isFinite(this.m)) return 'Infinity';
+            if (this.m === 0) return '0';
+            return this.m + 'e' + this.e;
+        }
+        valueOf() { return this.toNumber(); }
+        clone() { return new Decimal(this); }
+        log10() {
+            if (this.m <= 0) return new Decimal(-Infinity);
+            return new Decimal(Math.log10(this.m) + this.e);
+        }
+    }
+    const D = (v) => Decimal.from(v);
+    </script>
     <script>
         // ====== Firebase Config ======
         // PASTE YOUR FIREBASE CONFIG BELOW (from Firebase Console → Project Settings → Web App)
@@ -1382,7 +1541,7 @@
                 cost: 0,
                 multiplier: 1,
                 maxPollution: 1000000000000,
-                pollution: 0,
+                pollution: D(0),
                 colors: {
                     clean: 'radial-gradient(circle at 30% 30%, #4a90d9, #1e5799 40%, #0d3a6e 70%, #082040)',
                     mid: 'radial-gradient(circle at 30% 30%, #5a9aca, #2a6a99 40%, #1a4a70 70%, #0a2a40)',
@@ -1398,7 +1557,7 @@
                 cost: 5000000,
                 multiplier: 1.5,
                 maxPollution: 2000000000000,
-                pollution: 0,
+                pollution: D(0),
                 colors: {
                     clean: 'radial-gradient(circle at 30% 30%, #9a9a9a, #7a7a7a 40%, #5a5a5a 70%, #3a3a3a)',
                     mid: 'radial-gradient(circle at 30% 30%, #8a8a8a, #6a6a6a 40%, #4a4a4a 70%, #2a2a2a)',
@@ -1414,7 +1573,7 @@
                 cost: 15000000,
                 multiplier: 3,
                 maxPollution: 8000000000000,
-                pollution: 0,
+                pollution: D(0),
                 colors: {
                     clean: 'radial-gradient(circle at 30% 30%, #e6b800, #cc9900 40%, #997300 70%, #4d3a00)',
                     mid: 'radial-gradient(circle at 30% 30%, #cca300, #b38600 40%, #806000 70%, #403000)',
@@ -1430,7 +1589,7 @@
                 cost: 50000000,
                 multiplier: 5,
                 maxPollution: 15000000000000,
-                pollution: 0,
+                pollution: D(0),
                 colors: {
                     clean: 'radial-gradient(circle at 30% 30%, #c1440e, #8b3103 40%, #5c2102 70%, #2d1001)',
                     mid: 'radial-gradient(circle at 30% 30%, #a33d0d, #7a2e0a 40%, #4d1d06 70%, #261003)',
@@ -1446,7 +1605,7 @@
                 cost: 200000000,
                 multiplier: 8,
                 maxPollution: 30000000000000,
-                pollution: 0,
+                pollution: D(0),
                 colors: {
                     clean: 'radial-gradient(circle at 30% 30%, #8c8c8c, #6e6e6e 40%, #505050 70%, #323232)',
                     mid: 'radial-gradient(circle at 30% 30%, #7c7c7c, #5e5e5e 40%, #404040 70%, #222222)',
@@ -1462,7 +1621,7 @@
                 cost: 1000000000,
                 multiplier: 15,
                 maxPollution: 100000000000000,
-                pollution: 0,
+                pollution: D(0),
                 colors: {
                     clean: 'radial-gradient(circle at 30% 30%, #d4a574, #c98b4a 40%, #a86e30 70%, #5c3d1a)',
                     mid: 'radial-gradient(circle at 30% 30%, #c49464, #b87a3a 40%, #985e20 70%, #4c2f10)',
@@ -1478,7 +1637,7 @@
                 cost: 10000000000,
                 multiplier: 25,
                 maxPollution: 500000000000000,
-                pollution: 0,
+                pollution: D(0),
                 colors: {
                     clean: 'radial-gradient(circle at 30% 30%, #e8d5a3, #d4bc7a 40%, #b89a50 70%, #6b5a30)',
                     mid: 'radial-gradient(circle at 30% 30%, #d8c593, #c4ac6a 40%, #a88a40 70%, #5b4a20)',
@@ -1494,7 +1653,7 @@
                 cost: 100000000000,
                 multiplier: 50,
                 maxPollution: 2000000000000000,
-                pollution: 0,
+                pollution: D(0),
                 colors: {
                     clean: 'radial-gradient(circle at 30% 30%, #4169e1, #3158c4 40%, #2147a7 70%, #112a6b)',
                     mid: 'radial-gradient(circle at 30% 30%, #3159d1, #2148b4 40%, #113797 70%, #011a5b)',
@@ -1510,7 +1669,7 @@
                 cost: 500000000000,
                 multiplier: 75,
                 maxPollution: 5000000000000000,
-                pollution: 0,
+                pollution: D(0),
                 colors: {
                     clean: 'radial-gradient(circle at 30% 30%, #a89f96, #8a827a 40%, #6c655e 70%, #3e3a36)',
                     mid: 'radial-gradient(circle at 30% 30%, #988f86, #7a726a 40%, #5c554e 70%, #2e2a26)',
@@ -1526,7 +1685,7 @@
                 cost: 2000000000000,
                 multiplier: 100,
                 maxPollution: 10000000000000000,
-                pollution: 0,
+                pollution: D(0),
                 colors: {
                     clean: 'radial-gradient(circle at 30% 30%, #e8e8e8, #c8c8c8 40%, #a8a8a8 70%, #686868)',
                     mid: 'radial-gradient(circle at 30% 30%, #d8d8d8, #b8b8b8 40%, #989898 70%, #585858)',
@@ -1542,7 +1701,7 @@
                 cost: 10000000000000,
                 multiplier: 150,
                 maxPollution: 50000000000000000,
-                pollution: 0,
+                pollution: D(0),
                 colors: {
                     clean: 'radial-gradient(circle at 30% 30%, #d4d4e0, #b4b4c8 40%, #9494b0 70%, #545478)',
                     mid: 'radial-gradient(circle at 30% 30%, #c4c4d0, #a4a4b8 40%, #8484a0 70%, #444468)',
@@ -1558,7 +1717,7 @@
                 cost: 100000000000000,
                 multiplier: 500,
                 maxPollution: 1000000000000000000,
-                pollution: 0,
+                pollution: D(0),
                 colors: {
                     clean: 'radial-gradient(circle at 30% 30%, #ffdd00, #ffaa00 40%, #ff7700 70%, #cc4400)',
                     mid: 'radial-gradient(circle at 30% 30%, #ffcc00, #ff9900 40%, #ff6600 70%, #bb3300)',
@@ -1568,177 +1727,177 @@
             }
             ],
             alpha_centauri: [
-                { id: 'ac_prime', name: 'Centauri Prime', icon: '🌟', unlocked: true, cost: 0, multiplier: 1, maxPollution: 5e12, pollution: 0,
+                { id: 'ac_prime', name: 'Centauri Prime', icon: '🌟', unlocked: true, cost: 0, multiplier: 1, maxPollution: 5e12, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #f0e68c, #daa520 40%, #b8860b 70%, #8b4513)', mid: 'radial-gradient(circle at 30% 30%, #daa520, #cd853f 40%, #a0522d 70%, #8b4513)', dirty: 'radial-gradient(circle at 30% 30%, #cd853f, #8b4513 40%, #654321 70%, #3d2314)', dead: 'radial-gradient(circle at 30% 30%, #654321, #3d2314 40%, #2d1810 70%, #1a0f0a)' }},
-                { id: 'ac_b', name: 'Proxima B', icon: '🔵', unlocked: false, cost: 1e16, multiplier: 3, maxPollution: 2e13, pollution: 0,
+                { id: 'ac_b', name: 'Proxima B', icon: '🔵', unlocked: false, cost: 1e16, multiplier: 3, maxPollution: 2e13, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #4169e1, #1e90ff 40%, #0000cd 70%, #00008b)', mid: 'radial-gradient(circle at 30% 30%, #1e90ff, #0000cd 40%, #00008b 70%, #000080)', dirty: 'radial-gradient(circle at 30% 30%, #0000cd, #00008b 40%, #000080 70%, #00004d)', dead: 'radial-gradient(circle at 30% 30%, #2a2a4a, #1a1a3a 40%, #0a0a2a 70%, #05051a)' }},
-                { id: 'ac_c', name: 'Centauri C', icon: '🟤', unlocked: false, cost: 1e17, multiplier: 8, maxPollution: 8e13, pollution: 0,
+                { id: 'ac_c', name: 'Centauri C', icon: '🟤', unlocked: false, cost: 1e17, multiplier: 8, maxPollution: 8e13, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #8b4513, #a0522d 40%, #654321 70%, #3d2314)', mid: 'radial-gradient(circle at 30% 30%, #a0522d, #654321 40%, #3d2314 70%, #2d1810)', dirty: 'radial-gradient(circle at 30% 30%, #654321, #3d2314 40%, #2d1810 70%, #1a0f0a)', dead: 'radial-gradient(circle at 30% 30%, #2d1810, #1a0f0a 40%, #100a05 70%, #050302)' }},
-                { id: 'ac_star', name: 'Alpha Star', icon: '⭐', unlocked: false, cost: 1e18, multiplier: 25, maxPollution: 5e14, pollution: 0,
+                { id: 'ac_star', name: 'Alpha Star', icon: '⭐', unlocked: false, cost: 1e18, multiplier: 25, maxPollution: 5e14, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #fffacd, #ffd700 40%, #ffa500 70%, #ff8c00)', mid: 'radial-gradient(circle at 30% 30%, #ffd700, #ffa500 40%, #ff8c00 70%, #ff6600)', dirty: 'radial-gradient(circle at 30% 30%, #ffa500, #ff6600 40%, #cc5200 70%, #993d00)', dead: 'radial-gradient(circle at 30% 30%, #993d00, #662900 40%, #331400 70%, #1a0a00)' }}
             ],
             trappist: [
-                { id: 'tr_1b', name: 'TRAPPIST-1b', icon: '🌑', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e13, pollution: 0,
+                { id: 'tr_1b', name: 'TRAPPIST-1b', icon: '🌑', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e13, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #4a4a4a, #3a3a3a 40%, #2a2a2a 70%, #1a1a1a)', mid: 'radial-gradient(circle at 30% 30%, #3a3a3a, #2a2a2a 40%, #1a1a1a 70%, #0a0a0a)', dirty: 'radial-gradient(circle at 30% 30%, #2a2a2a, #1a1a1a 40%, #0a0a0a 70%, #050505)', dead: 'radial-gradient(circle at 30% 30%, #1a1a1a, #0a0a0a 40%, #050505 70%, #020202)' }},
-                { id: 'tr_1c', name: 'TRAPPIST-1c', icon: '🟠', unlocked: false, cost: 5e17, multiplier: 3, maxPollution: 5e13, pollution: 0,
+                { id: 'tr_1c', name: 'TRAPPIST-1c', icon: '🟠', unlocked: false, cost: 5e17, multiplier: 3, maxPollution: 5e13, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ff8c00, #ff6600 40%, #cc5200 70%, #993d00)', mid: 'radial-gradient(circle at 30% 30%, #ff6600, #cc5200 40%, #993d00 70%, #662900)', dirty: 'radial-gradient(circle at 30% 30%, #cc5200, #993d00 40%, #662900 70%, #331400)', dead: 'radial-gradient(circle at 30% 30%, #662900, #331400 40%, #1a0a00 70%, #0d0500)' }},
-                { id: 'tr_1d', name: 'TRAPPIST-1d', icon: '🔵', unlocked: false, cost: 2e18, multiplier: 8, maxPollution: 2e14, pollution: 0,
+                { id: 'tr_1d', name: 'TRAPPIST-1d', icon: '🔵', unlocked: false, cost: 2e18, multiplier: 8, maxPollution: 2e14, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #00bfff, #1e90ff 40%, #4169e1 70%, #0000cd)', mid: 'radial-gradient(circle at 30% 30%, #1e90ff, #4169e1 40%, #0000cd 70%, #00008b)', dirty: 'radial-gradient(circle at 30% 30%, #4169e1, #0000cd 40%, #00008b 70%, #000080)', dead: 'radial-gradient(circle at 30% 30%, #1a1a4a, #0a0a3a 40%, #05052a 70%, #02021a)' }},
-                { id: 'tr_1e', name: 'TRAPPIST-1e', icon: '🌍', unlocked: false, cost: 1e19, multiplier: 20, maxPollution: 1e15, pollution: 0,
+                { id: 'tr_1e', name: 'TRAPPIST-1e', icon: '🌍', unlocked: false, cost: 1e19, multiplier: 20, maxPollution: 1e15, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #228b22, #2e8b57 40%, #006400 70%, #004d00)', mid: 'radial-gradient(circle at 30% 30%, #2e8b57, #006400 40%, #004d00 70%, #003300)', dirty: 'radial-gradient(circle at 30% 30%, #556b2f, #4a5a2a 40%, #3d4a22 70%, #2a3318)', dead: 'radial-gradient(circle at 30% 30%, #3d3d2a, #2a2a1a 40%, #1a1a10 70%, #0a0a05)' }},
-                { id: 'tr_1f', name: 'TRAPPIST-1f', icon: '❄️', unlocked: false, cost: 5e19, multiplier: 50, maxPollution: 5e15, pollution: 0,
+                { id: 'tr_1f', name: 'TRAPPIST-1f', icon: '❄️', unlocked: false, cost: 5e19, multiplier: 50, maxPollution: 5e15, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #e0ffff, #b0e0e6 40%, #87ceeb 70%, #4682b4)', mid: 'radial-gradient(circle at 30% 30%, #b0e0e6, #87ceeb 40%, #4682b4 70%, #4169e1)', dirty: 'radial-gradient(circle at 30% 30%, #87ceeb, #4682b4 40%, #4169e1 70%, #0000cd)', dead: 'radial-gradient(circle at 30% 30%, #4a4a6a, #3a3a5a 40%, #2a2a4a 70%, #1a1a3a)' }},
-                { id: 'tr_star', name: 'TRAPPIST Star', icon: '🔴', unlocked: false, cost: 5e20, multiplier: 150, maxPollution: 5e16, pollution: 0,
+                { id: 'tr_star', name: 'TRAPPIST Star', icon: '🔴', unlocked: false, cost: 5e20, multiplier: 150, maxPollution: 5e16, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ff4500, #dc143c 40%, #b22222 70%, #8b0000)', mid: 'radial-gradient(circle at 30% 30%, #dc143c, #b22222 40%, #8b0000 70%, #660000)', dirty: 'radial-gradient(circle at 30% 30%, #b22222, #8b0000 40%, #660000 70%, #330000)', dead: 'radial-gradient(circle at 30% 30%, #4a1a1a, #3a0a0a 40%, #2a0505 70%, #1a0202)' }}
             ],
             kepler442: [
-                { id: 'k442_b', name: 'Kepler-442b', icon: '🌎', unlocked: true, cost: 0, multiplier: 1, maxPollution: 5e14, pollution: 0,
+                { id: 'k442_b', name: 'Kepler-442b', icon: '🌎', unlocked: true, cost: 0, multiplier: 1, maxPollution: 5e14, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #3cb371, #2e8b57 40%, #228b22 70%, #006400)', mid: 'radial-gradient(circle at 30% 30%, #2e8b57, #228b22 40%, #006400 70%, #004d00)', dirty: 'radial-gradient(circle at 30% 30%, #556b2f, #4a5a2a 40%, #3d4a22 70%, #2a3318)', dead: 'radial-gradient(circle at 30% 30%, #3d3d2a, #2a2a1a 40%, #1a1a10 70%, #0a0a05)' }},
-                { id: 'k442_moon', name: 'Kepler Moon', icon: '🌙', unlocked: false, cost: 1e20, multiplier: 5, maxPollution: 2e15, pollution: 0,
+                { id: 'k442_moon', name: 'Kepler Moon', icon: '🌙', unlocked: false, cost: 1e20, multiplier: 5, maxPollution: 2e15, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #c0c0c0, #a9a9a9 40%, #808080 70%, #696969)', mid: 'radial-gradient(circle at 30% 30%, #a9a9a9, #808080 40%, #696969 70%, #4a4a4a)', dirty: 'radial-gradient(circle at 30% 30%, #808080, #696969 40%, #4a4a4a 70%, #2a2a2a)', dead: 'radial-gradient(circle at 30% 30%, #4a4a4a, #2a2a2a 40%, #1a1a1a 70%, #0a0a0a)' }},
-                { id: 'k442_giant', name: 'Gas Giant X', icon: '🟣', unlocked: false, cost: 1e21, multiplier: 20, maxPollution: 1e16, pollution: 0,
+                { id: 'k442_giant', name: 'Gas Giant X', icon: '🟣', unlocked: false, cost: 1e21, multiplier: 20, maxPollution: 1e16, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #9370db, #8a2be2 40%, #7b68ee 70%, #6a5acd)', mid: 'radial-gradient(circle at 30% 30%, #8a2be2, #7b68ee 40%, #6a5acd 70%, #483d8b)', dirty: 'radial-gradient(circle at 30% 30%, #7b68ee, #6a5acd 40%, #483d8b 70%, #2e1f5e)', dead: 'radial-gradient(circle at 30% 30%, #2e1f5e, #1f1040 40%, #100820 70%, #080410)' }},
-                { id: 'k442_star', name: 'Kepler Star', icon: '🟠', unlocked: false, cost: 1e22, multiplier: 75, maxPollution: 1e17, pollution: 0,
+                { id: 'k442_star', name: 'Kepler Star', icon: '🟠', unlocked: false, cost: 1e22, multiplier: 75, maxPollution: 1e17, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffa500, #ff8c00 40%, #ff6600 70%, #cc5200)', mid: 'radial-gradient(circle at 30% 30%, #ff8c00, #ff6600 40%, #cc5200 70%, #993d00)', dirty: 'radial-gradient(circle at 30% 30%, #ff6600, #cc5200 40%, #993d00 70%, #662900)', dead: 'radial-gradient(circle at 30% 30%, #662900, #4d1f00 40%, #331400 70%, #1a0a00)' }}
             ],
             gliese: [
-                { id: 'gl_a', name: 'Gliese A', icon: '🌕', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e15, pollution: 0,
+                { id: 'gl_a', name: 'Gliese A', icon: '🌕', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e15, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #f5f5dc, #eed9b6 40%, #deb887 70%, #d2a679)', mid: 'radial-gradient(circle at 30% 30%, #eed9b6, #deb887 40%, #d2a679 70%, #c19660)', dirty: 'radial-gradient(circle at 30% 30%, #deb887, #c19660 40%, #a68040 70%, #8b6914)', dead: 'radial-gradient(circle at 30% 30%, #6b5a3a, #5a4a2a 40%, #4a3a1a 70%, #3a2a0a)' }},
-                { id: 'gl_b', name: 'Gliese B', icon: '🔴', unlocked: false, cost: 5e21, multiplier: 5, maxPollution: 5e15, pollution: 0,
+                { id: 'gl_b', name: 'Gliese B', icon: '🔴', unlocked: false, cost: 5e21, multiplier: 5, maxPollution: 5e15, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #cd5c5c, #dc143c 40%, #b22222 70%, #8b0000)', mid: 'radial-gradient(circle at 30% 30%, #dc143c, #b22222 40%, #8b0000 70%, #660000)', dirty: 'radial-gradient(circle at 30% 30%, #b22222, #8b0000 40%, #660000 70%, #4d0000)', dead: 'radial-gradient(circle at 30% 30%, #4d0000, #330000 40%, #1a0000 70%, #0d0000)' }},
-                { id: 'gl_c', name: 'Gliese C', icon: '🟢', unlocked: false, cost: 5e22, multiplier: 20, maxPollution: 2e16, pollution: 0,
+                { id: 'gl_c', name: 'Gliese C', icon: '🟢', unlocked: false, cost: 5e22, multiplier: 20, maxPollution: 2e16, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #00ff00, #32cd32 40%, #228b22 70%, #006400)', mid: 'radial-gradient(circle at 30% 30%, #32cd32, #228b22 40%, #006400 70%, #004d00)', dirty: 'radial-gradient(circle at 30% 30%, #228b22, #006400 40%, #004d00 70%, #003300)', dead: 'radial-gradient(circle at 30% 30%, #2a3d2a, #1a2a1a 40%, #0a1a0a 70%, #050d05)' }},
-                { id: 'gl_triple', name: 'Triple Star Core', icon: '🔶', unlocked: false, cost: 5e23, multiplier: 100, maxPollution: 2e17, pollution: 0,
+                { id: 'gl_triple', name: 'Triple Star Core', icon: '🔶', unlocked: false, cost: 5e23, multiplier: 100, maxPollution: 2e17, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ff7f50, #ff6347 40%, #ff4500 70%, #dc143c)', mid: 'radial-gradient(circle at 30% 30%, #ff6347, #ff4500 40%, #dc143c 70%, #b22222)', dirty: 'radial-gradient(circle at 30% 30%, #ff4500, #dc143c 40%, #b22222 70%, #8b0000)', dead: 'radial-gradient(circle at 30% 30%, #5a2a2a, #4a1a1a 40%, #3a0a0a 70%, #2a0505)' }}
             ],
             kepler22: [
-                { id: 'k22_b', name: 'Kepler-22b', icon: '🌊', unlocked: true, cost: 0, multiplier: 1, maxPollution: 5e15, pollution: 0,
+                { id: 'k22_b', name: 'Kepler-22b', icon: '🌊', unlocked: true, cost: 0, multiplier: 1, maxPollution: 5e15, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #00ced1, #20b2aa 40%, #008b8b 70%, #006666)', mid: 'radial-gradient(circle at 30% 30%, #20b2aa, #008b8b 40%, #006666 70%, #004d4d)', dirty: 'radial-gradient(circle at 30% 30%, #008b8b, #006666 40%, #004d4d 70%, #003333)', dead: 'radial-gradient(circle at 30% 30%, #2a4a4a, #1a3a3a 40%, #0a2a2a 70%, #051a1a)' }},
-                { id: 'k22_atoll', name: 'Ocean Atoll', icon: '🏝️', unlocked: false, cost: 1e24, multiplier: 5, maxPollution: 2e16, pollution: 0,
+                { id: 'k22_atoll', name: 'Ocean Atoll', icon: '🏝️', unlocked: false, cost: 1e24, multiplier: 5, maxPollution: 2e16, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #40e0d0, #48d1cc 40%, #00ced1 70%, #20b2aa)', mid: 'radial-gradient(circle at 30% 30%, #48d1cc, #00ced1 40%, #20b2aa 70%, #008b8b)', dirty: 'radial-gradient(circle at 30% 30%, #00ced1, #20b2aa 40%, #008b8b 70%, #006666)', dead: 'radial-gradient(circle at 30% 30%, #2a4a4a, #1a3a3a 40%, #0a2a2a 70%, #051a1a)' }},
-                { id: 'k22_deep', name: 'The Deep', icon: '🦑', unlocked: false, cost: 1e25, multiplier: 25, maxPollution: 1e17, pollution: 0,
+                { id: 'k22_deep', name: 'The Deep', icon: '🦑', unlocked: false, cost: 1e25, multiplier: 25, maxPollution: 1e17, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #191970, #000080 40%, #00008b 70%, #0000cd)', mid: 'radial-gradient(circle at 30% 30%, #000080, #00008b 40%, #0000cd 70%, #0000ff)', dirty: 'radial-gradient(circle at 30% 30%, #0a0a4a, #05053a 40%, #02022a 70%, #01011a)', dead: 'radial-gradient(circle at 30% 30%, #0a0a2a, #05051a 40%, #02020a 70%, #010105)' }},
-                { id: 'k22_star', name: 'Kepler-22', icon: '💧', unlocked: false, cost: 1e26, multiplier: 100, maxPollution: 1e18, pollution: 0,
+                { id: 'k22_star', name: 'Kepler-22', icon: '💧', unlocked: false, cost: 1e26, multiplier: 100, maxPollution: 1e18, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #87ceeb, #00bfff 40%, #1e90ff 70%, #4169e1)', mid: 'radial-gradient(circle at 30% 30%, #00bfff, #1e90ff 40%, #4169e1 70%, #0000cd)', dirty: 'radial-gradient(circle at 30% 30%, #1e90ff, #4169e1 40%, #0000cd 70%, #00008b)', dead: 'radial-gradient(circle at 30% 30%, #2a2a5a, #1a1a4a 40%, #0a0a3a 70%, #05052a)' }}
             ],
             proxima: [
-                { id: 'px_b', name: 'Proxima b', icon: '❤️', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e16, pollution: 0,
+                { id: 'px_b', name: 'Proxima b', icon: '❤️', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e16, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ff6b6b, #ee5a5a 40%, #dc143c 70%, #b22222)', mid: 'radial-gradient(circle at 30% 30%, #ee5a5a, #dc143c 40%, #b22222 70%, #8b0000)', dirty: 'radial-gradient(circle at 30% 30%, #dc143c, #b22222 40%, #8b0000 70%, #660000)', dead: 'radial-gradient(circle at 30% 30%, #4a1a1a, #3a0a0a 40%, #2a0505 70%, #1a0202)' }},
-                { id: 'px_c', name: 'Proxima c', icon: '💜', unlocked: false, cost: 5e25, multiplier: 8, maxPollution: 5e16, pollution: 0,
+                { id: 'px_c', name: 'Proxima c', icon: '💜', unlocked: false, cost: 5e25, multiplier: 8, maxPollution: 5e16, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #da70d6, #ba55d3 40%, #9932cc 70%, #8b008b)', mid: 'radial-gradient(circle at 30% 30%, #ba55d3, #9932cc 40%, #8b008b 70%, #800080)', dirty: 'radial-gradient(circle at 30% 30%, #9932cc, #8b008b 40%, #800080 70%, #4b0082)', dead: 'radial-gradient(circle at 30% 30%, #2a1a3a, #1a0a2a 40%, #0a051a 70%, #05020d)' }},
-                { id: 'px_star', name: 'Proxima Star', icon: '🔴', unlocked: false, cost: 5e26, multiplier: 50, maxPollution: 5e17, pollution: 0,
+                { id: 'px_star', name: 'Proxima Star', icon: '🔴', unlocked: false, cost: 5e26, multiplier: 50, maxPollution: 5e17, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ff0000, #dc143c 40%, #b22222 70%, #8b0000)', mid: 'radial-gradient(circle at 30% 30%, #dc143c, #b22222 40%, #8b0000 70%, #660000)', dirty: 'radial-gradient(circle at 30% 30%, #b22222, #8b0000 40%, #660000 70%, #4d0000)', dead: 'radial-gradient(circle at 30% 30%, #3a0a0a, #2a0505 40%, #1a0202 70%, #0d0101)' }}
             ],
             tau_ceti: [
-                { id: 'tc_e', name: 'Tau Ceti e', icon: '🌏', unlocked: true, cost: 0, multiplier: 1, maxPollution: 5e16, pollution: 0,
+                { id: 'tc_e', name: 'Tau Ceti e', icon: '🌏', unlocked: true, cost: 0, multiplier: 1, maxPollution: 5e16, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #4a90d9, #1e5799 40%, #0d3a6e 70%, #082040)', mid: 'radial-gradient(circle at 30% 30%, #5a9aca, #2a6a99 40%, #1a4a70 70%, #0a2a40)', dirty: 'radial-gradient(circle at 30% 30%, #6a8b9a, #3d5c6e 40%, #2a4050 70%, #152030)', dead: 'radial-gradient(circle at 30% 30%, #8b7355, #5c4a3a 40%, #3d3028 70%, #1a1510)' }},
-                { id: 'tc_f', name: 'Tau Ceti f', icon: '🟤', unlocked: false, cost: 1e27, multiplier: 10, maxPollution: 2e17, pollution: 0,
+                { id: 'tc_f', name: 'Tau Ceti f', icon: '🟤', unlocked: false, cost: 1e27, multiplier: 10, maxPollution: 2e17, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #d2691e, #cd853f 40%, #a0522d 70%, #8b4513)', mid: 'radial-gradient(circle at 30% 30%, #cd853f, #a0522d 40%, #8b4513 70%, #654321)', dirty: 'radial-gradient(circle at 30% 30%, #a0522d, #8b4513 40%, #654321 70%, #3d2314)', dead: 'radial-gradient(circle at 30% 30%, #3d2314, #2d1810 40%, #1d0f0a 70%, #0d0805)' }},
-                { id: 'tc_star', name: 'Tau Ceti', icon: '💛', unlocked: false, cost: 1e28, multiplier: 75, maxPollution: 2e18, pollution: 0,
+                { id: 'tc_star', name: 'Tau Ceti', icon: '💛', unlocked: false, cost: 1e28, multiplier: 75, maxPollution: 2e18, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffff00, #ffd700 40%, #ffc000 70%, #ffaa00)', mid: 'radial-gradient(circle at 30% 30%, #ffd700, #ffc000 40%, #ffaa00 70%, #ff9500)', dirty: 'radial-gradient(circle at 30% 30%, #ffc000, #ffaa00 40%, #ff9500 70%, #ff8000)', dead: 'radial-gradient(circle at 30% 30%, #996600, #804d00 40%, #663300 70%, #4d2600)' }}
             ],
             andromeda: [
-                { id: 'an_gateway', name: 'Gateway World', icon: '🌀', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e17, pollution: 0,
+                { id: 'an_gateway', name: 'Gateway World', icon: '🌀', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e17, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #9400d3, #8b008b 40%, #800080 70%, #4b0082)', mid: 'radial-gradient(circle at 30% 30%, #8b008b, #800080 40%, #4b0082 70%, #2e0854)', dirty: 'radial-gradient(circle at 30% 30%, #800080, #4b0082 40%, #2e0854 70%, #1a0030)', dead: 'radial-gradient(circle at 30% 30%, #1a0030, #0d0018 40%, #05000a 70%, #020005)' }},
-                { id: 'an_prime', name: 'Andromeda Prime', icon: '👑', unlocked: false, cost: 1e30, multiplier: 20, maxPollution: 1e18, pollution: 0,
+                { id: 'an_prime', name: 'Andromeda Prime', icon: '👑', unlocked: false, cost: 1e30, multiplier: 20, maxPollution: 1e18, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffd700, #ffb700 40%, #ff9700 70%, #ff7700)', mid: 'radial-gradient(circle at 30% 30%, #ffb700, #ff9700 40%, #ff7700 70%, #ff5700)', dirty: 'radial-gradient(circle at 30% 30%, #ff9700, #ff7700 40%, #ff5700 70%, #ff3700)', dead: 'radial-gradient(circle at 30% 30%, #804000, #602000 40%, #401000 70%, #200800)' }},
-                { id: 'an_core', name: 'Galactic Core', icon: '💫', unlocked: false, cost: 1e32, multiplier: 150, maxPollution: 1e19, pollution: 0,
+                { id: 'an_core', name: 'Galactic Core', icon: '💫', unlocked: false, cost: 1e32, multiplier: 150, maxPollution: 1e19, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffffff, #f0f0ff 40%, #e0e0ff 70%, #d0d0ff)', mid: 'radial-gradient(circle at 30% 30%, #f0f0ff, #e0e0ff 40%, #d0d0ff 70%, #c0c0ff)', dirty: 'radial-gradient(circle at 30% 30%, #e0e0ff, #c0c0e0 40%, #a0a0c0 70%, #8080a0)', dead: 'radial-gradient(circle at 30% 30%, #404060, #303050 40%, #202040 70%, #101030)' }}
             ],
             void: [
-                { id: 'vd_edge', name: 'Edge of Nothing', icon: '⚫', unlocked: true, cost: 0, multiplier: 1, maxPollution: 5e17, pollution: 0,
+                { id: 'vd_edge', name: 'Edge of Nothing', icon: '⚫', unlocked: true, cost: 0, multiplier: 1, maxPollution: 5e17, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #1a1a2e, #0f0f1f 40%, #050510 70%, #020205)', mid: 'radial-gradient(circle at 30% 30%, #0f0f1f, #050510 40%, #020205 70%, #010102)', dirty: 'radial-gradient(circle at 30% 30%, #050510, #020205 40%, #010102 70%, #000001)', dead: 'radial-gradient(circle at 30% 30%, #000001, #000000 40%, #000000 70%, #000000)' }},
-                { id: 'vd_tear', name: 'Reality Tear', icon: '🕳️', unlocked: false, cost: 1e35, multiplier: 50, maxPollution: 5e18, pollution: 0,
+                { id: 'vd_tear', name: 'Reality Tear', icon: '🕳️', unlocked: false, cost: 1e35, multiplier: 50, maxPollution: 5e18, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #2a0a3a, #1a0528 40%, #0a0215 70%, #05010a)', mid: 'radial-gradient(circle at 30% 30%, #1a0528, #0a0215 40%, #05010a 70%, #020105)', dirty: 'radial-gradient(circle at 30% 30%, #0a0215, #05010a 40%, #020105 70%, #010002)', dead: 'radial-gradient(circle at 30% 30%, #020105, #010002 40%, #000001 70%, #000000)' }},
-                { id: 'vd_heart', name: 'Void Heart', icon: '🖤', unlocked: false, cost: 1e37, multiplier: 500, maxPollution: 5e19, pollution: 0,
+                { id: 'vd_heart', name: 'Void Heart', icon: '🖤', unlocked: false, cost: 1e37, multiplier: 500, maxPollution: 5e19, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #0a0a15, #050508 40%, #020203 70%, #010101)', mid: 'radial-gradient(circle at 30% 30%, #050508, #020203 40%, #010101 70%, #000000)', dirty: 'radial-gradient(circle at 30% 30%, #020203, #010101 40%, #000000 70%, #000000)', dead: 'radial-gradient(circle at 30% 30%, #000000, #000000 40%, #000000 70%, #000000)' }}
             ],
             origin: [
-                { id: 'or_spark', name: 'First Spark', icon: '✨', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e18, pollution: 0,
+                { id: 'or_spark', name: 'First Spark', icon: '✨', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e18, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffffff, #ffffcc 40%, #ffff99 70%, #ffff66)', mid: 'radial-gradient(circle at 30% 30%, #ffffcc, #ffff99 40%, #ffff66 70%, #ffff33)', dirty: 'radial-gradient(circle at 30% 30%, #ffff99, #ffff66 40%, #ffff33 70%, #ffff00)', dead: 'radial-gradient(circle at 30% 30%, #666633, #4d4d26 40%, #33331a 70%, #1a1a0d)' }},
-                { id: 'or_matter', name: 'First Matter', icon: '🔮', unlocked: false, cost: 1e40, multiplier: 100, maxPollution: 1e19, pollution: 0,
+                { id: 'or_matter', name: 'First Matter', icon: '🔮', unlocked: false, cost: 1e40, multiplier: 100, maxPollution: 1e19, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ff00ff, #cc00cc 40%, #990099 70%, #660066)', mid: 'radial-gradient(circle at 30% 30%, #cc00cc, #990099 40%, #660066 70%, #4d004d)', dirty: 'radial-gradient(circle at 30% 30%, #990099, #660066 40%, #4d004d 70%, #330033)', dead: 'radial-gradient(circle at 30% 30%, #1a001a, #0d000d 40%, #050005 70%, #020002)' }},
-                { id: 'or_bang', name: 'The Big Bang', icon: '💥', unlocked: false, cost: 1e42, multiplier: 1000, maxPollution: 1e20, pollution: 0,
+                { id: 'or_bang', name: 'The Big Bang', icon: '💥', unlocked: false, cost: 1e42, multiplier: 1000, maxPollution: 1e20, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffffff, #ffcccc 40%, #ff9999 70%, #ff6666)', mid: 'radial-gradient(circle at 30% 30%, #ffcccc, #ff9999 40%, #ff6666 70%, #ff3333)', dirty: 'radial-gradient(circle at 30% 30%, #ff9999, #ff6666 40%, #ff3333 70%, #ff0000)', dead: 'radial-gradient(circle at 30% 30%, #660000, #4d0000 40%, #330000 70%, #1a0000)' }}
             ],
             darkdimension: [
-                { id: 'dd_shadow', name: 'Shadow Core', icon: '🌑', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e20, pollution: 0,
+                { id: 'dd_shadow', name: 'Shadow Core', icon: '🌑', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e20, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #1a1a2e, #16213e 40%, #0f3460 70%, #1a1a2e)', mid: 'radial-gradient(circle at 30% 30%, #0f0f1a, #0a0a12 40%, #05050a 70%, #000000)', dirty: 'radial-gradient(circle at 30% 30%, #050505, #030303 40%, #010101 70%, #000000)', dead: 'radial-gradient(circle at 30% 30%, #000000, #000000 40%, #000000 70%, #000000)' }},
-                { id: 'dd_void', name: 'Void Sphere', icon: '⚫', unlocked: false, cost: 1e45, multiplier: 50, maxPollution: 1e21, pollution: 0,
+                { id: 'dd_void', name: 'Void Sphere', icon: '⚫', unlocked: false, cost: 1e45, multiplier: 50, maxPollution: 1e21, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #2d2d44, #1f1f33 40%, #111122 70%, #0a0a11)', mid: 'radial-gradient(circle at 30% 30%, #1a1a2a, #0f0f1a 40%, #05050a 70%, #000000)', dirty: 'radial-gradient(circle at 30% 30%, #0a0a0a, #050505 40%, #020202 70%, #000000)', dead: 'radial-gradient(circle at 30% 30%, #000000, #000000 40%, #000000 70%, #000000)' }},
-                { id: 'dd_abyss', name: 'The Abyss', icon: '🕳️', unlocked: false, cost: 1e47, multiplier: 500, maxPollution: 1e22, pollution: 0,
+                { id: 'dd_abyss', name: 'The Abyss', icon: '🕳️', unlocked: false, cost: 1e47, multiplier: 500, maxPollution: 1e22, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #1a0a2e, #0f0520 40%, #080312 70%, #030108)', mid: 'radial-gradient(circle at 30% 30%, #0a0515, #05030a 40%, #020105 70%, #000000)', dirty: 'radial-gradient(circle at 30% 30%, #030103, #010001 40%, #000000 70%, #000000)', dead: 'radial-gradient(circle at 30% 30%, #000000, #000000 40%, #000000 70%, #000000)' }}
             ],
             quantumrealm: [
-                { id: 'qr_wave', name: 'Wave Function', icon: '〰️', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e22, pollution: 0,
+                { id: 'qr_wave', name: 'Wave Function', icon: '〰️', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e22, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #00ffff, #00cccc 40%, #009999 70%, #006666)', mid: 'radial-gradient(circle at 30% 30%, #00cccc, #009999 40%, #006666 70%, #004444)', dirty: 'radial-gradient(circle at 30% 30%, #006666, #004444 40%, #002222 70%, #001111)', dead: 'radial-gradient(circle at 30% 30%, #001111, #000808 40%, #000404 70%, #000000)' }},
-                { id: 'qr_particle', name: 'Particle Cloud', icon: '⚛️', unlocked: false, cost: 1e50, multiplier: 100, maxPollution: 1e23, pollution: 0,
+                { id: 'qr_particle', name: 'Particle Cloud', icon: '⚛️', unlocked: false, cost: 1e50, multiplier: 100, maxPollution: 1e23, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ff00ff, #cc00ff 40%, #9900ff 70%, #6600ff)', mid: 'radial-gradient(circle at 30% 30%, #9900cc, #6600aa 40%, #440088 70%, #220066)', dirty: 'radial-gradient(circle at 30% 30%, #440055, #220033 40%, #110022 70%, #080011)', dead: 'radial-gradient(circle at 30% 30%, #0a000a, #050005 40%, #020002 70%, #000000)' }},
-                { id: 'qr_superpos', name: 'Superposition', icon: '🔀', unlocked: false, cost: 1e52, multiplier: 1000, maxPollution: 1e24, pollution: 0,
+                { id: 'qr_superpos', name: 'Superposition', icon: '🔀', unlocked: false, cost: 1e52, multiplier: 1000, maxPollution: 1e24, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffff00, #00ffff 40%, #ff00ff 70%, #ffffff)', mid: 'radial-gradient(circle at 30% 30%, #aaaa00, #00aaaa 40%, #aa00aa 70%, #aaaaaa)', dirty: 'radial-gradient(circle at 30% 30%, #555500, #005555 40%, #550055 70%, #555555)', dead: 'radial-gradient(circle at 30% 30%, #1a1a1a, #0d0d0d 40%, #050505 70%, #000000)' }}
             ],
             eternityrift: [
-                { id: 'er_past', name: 'Echoes of Past', icon: '⏪', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e24, pollution: 0,
+                { id: 'er_past', name: 'Echoes of Past', icon: '⏪', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e24, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #c9a227, #b8860b 40%, #996515 70%, #7a4810)', mid: 'radial-gradient(circle at 30% 30%, #8b6914, #705010 40%, #55380c 70%, #3a2208)', dirty: 'radial-gradient(circle at 30% 30%, #4a3a0a, #352808 40%, #201806 70%, #100c03)', dead: 'radial-gradient(circle at 30% 30%, #1a1408, #0d0a04 40%, #050302 70%, #000000)' }},
-                { id: 'er_present', name: 'Frozen Now', icon: '⏸️', unlocked: false, cost: 1e55, multiplier: 200, maxPollution: 1e25, pollution: 0,
+                { id: 'er_present', name: 'Frozen Now', icon: '⏸️', unlocked: false, cost: 1e55, multiplier: 200, maxPollution: 1e25, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #87ceeb, #6bb3d9 40%, #4f98c7 70%, #3380b5)', mid: 'radial-gradient(circle at 30% 30%, #4a8ab0, #356a90 40%, #204a70 70%, #102a50)', dirty: 'radial-gradient(circle at 30% 30%, #1a3a5a, #102540 40%, #081528 70%, #040a14)', dead: 'radial-gradient(circle at 30% 30%, #050a10, #030508 40%, #010204 70%, #000000)' }},
-                { id: 'er_future', name: 'Infinite Tomorrow', icon: '⏩', unlocked: false, cost: 1e57, multiplier: 2000, maxPollution: 1e26, pollution: 0,
+                { id: 'er_future', name: 'Infinite Tomorrow', icon: '⏩', unlocked: false, cost: 1e57, multiplier: 2000, maxPollution: 1e26, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #e0e0e0, #c0c0c0 40%, #a0a0a0 70%, #808080)', mid: 'radial-gradient(circle at 30% 30%, #909090, #707070 40%, #505050 70%, #303030)', dirty: 'radial-gradient(circle at 30% 30%, #404040, #303030 40%, #202020 70%, #101010)', dead: 'radial-gradient(circle at 30% 30%, #101010, #080808 40%, #040404 70%, #000000)' }}
             ],
             omniversehub: [
-                { id: 'oh_nexus', name: 'Reality Nexus', icon: '🔮', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e26, pollution: 0,
+                { id: 'oh_nexus', name: 'Reality Nexus', icon: '🔮', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e26, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ff6b6b, #ffd93d 40%, #6bcb77 70%, #4d96ff)', mid: 'radial-gradient(circle at 30% 30%, #cc5555, #ccad30 40%, #55a25f 70%, #3d78cc)', dirty: 'radial-gradient(circle at 30% 30%, #803535, #806c1e 40%, #35663b 70%, #264b80)', dead: 'radial-gradient(circle at 30% 30%, #1a0d0d, #1a1608 40%, #0d1a0f 70%, #0d1320)' }},
-                { id: 'oh_prism', name: 'Infinite Prism', icon: '💎', unlocked: false, cost: 1e60, multiplier: 500, maxPollution: 1e27, pollution: 0,
+                { id: 'oh_prism', name: 'Infinite Prism', icon: '💎', unlocked: false, cost: 1e60, multiplier: 500, maxPollution: 1e27, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffffff, #ffccff 40%, #ccffff 70%, #ffffcc)', mid: 'radial-gradient(circle at 30% 30%, #cccccc, #cc99cc 40%, #99cccc 70%, #cccc99)', dirty: 'radial-gradient(circle at 30% 30%, #666666, #664466 40%, #446666 70%, #666644)', dead: 'radial-gradient(circle at 30% 30%, #1a1a1a, #1a101a 40%, #101a1a 70%, #1a1a10)' }},
-                { id: 'oh_throne', name: 'Cosmic Throne', icon: '👑', unlocked: false, cost: 1e62, multiplier: 5000, maxPollution: 1e28, pollution: 0,
+                { id: 'oh_throne', name: 'Cosmic Throne', icon: '👑', unlocked: false, cost: 1e62, multiplier: 5000, maxPollution: 1e28, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffd700, #ffcc00 40%, #ffaa00 70%, #ff8800)', mid: 'radial-gradient(circle at 30% 30%, #ccaa00, #cc9900 40%, #cc8800 70%, #cc6600)', dirty: 'radial-gradient(circle at 30% 30%, #806600, #805500 40%, #804400 70%, #803300)', dead: 'radial-gradient(circle at 30% 30%, #1a1400, #1a1000 40%, #1a0c00 70%, #1a0800)' }}
             ],
             absoluteinfinity: [
-                { id: 'ai_alpha', name: 'Alpha Point', icon: '🅰️', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e28, pollution: 0,
+                { id: 'ai_alpha', name: 'Alpha Point', icon: '🅰️', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e28, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffffff, #f0f0ff 40%, #e0e0ff 70%, #d0d0ff)', mid: 'radial-gradient(circle at 30% 30%, #c0c0e0, #a0a0c0 40%, #8080a0 70%, #606080)', dirty: 'radial-gradient(circle at 30% 30%, #404060, #303050 40%, #202040 70%, #101030)', dead: 'radial-gradient(circle at 30% 30%, #080810, #040408 40%, #020204 70%, #000000)' }},
-                { id: 'ai_omega', name: 'Omega Point', icon: '🔚', unlocked: false, cost: 1e66, multiplier: 1000, maxPollution: 1e29, pollution: 0,
+                { id: 'ai_omega', name: 'Omega Point', icon: '🔚', unlocked: false, cost: 1e66, multiplier: 1000, maxPollution: 1e29, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #000033, #000066 40%, #000099 70%, #0000cc)', mid: 'radial-gradient(circle at 30% 30%, #000022, #000044 40%, #000066 70%, #000088)', dirty: 'radial-gradient(circle at 30% 30%, #000011, #000022 40%, #000033 70%, #000044)', dead: 'radial-gradient(circle at 30% 30%, #000008, #000004 40%, #000002 70%, #000000)' }},
-                { id: 'ai_infinity', name: 'True Infinity', icon: '♾️', unlocked: false, cost: 1e70, multiplier: 1000000, maxPollution: 1e30, pollution: 0,
+                { id: 'ai_infinity', name: 'True Infinity', icon: '♾️', unlocked: false, cost: 1e70, multiplier: 1000000, maxPollution: 1e30, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffffff, #000000 20%, #ffffff 40%, #000000 60%, #ffffff 80%, #000000)', mid: 'radial-gradient(circle at 30% 30%, #aaaaaa, #000000 20%, #aaaaaa 40%, #000000 60%, #aaaaaa 80%, #000000)', dirty: 'radial-gradient(circle at 30% 30%, #555555, #000000 20%, #555555 40%, #000000 60%, #555555 80%, #000000)', dead: 'radial-gradient(circle at 30% 30%, #000000, #000000 40%, #000000 70%, #000000)' }}
             ],
             primordialchaos: [
-                { id: 'pc_storm', name: 'Chaos Storm', icon: '🌪️', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e32, pollution: 0,
+                { id: 'pc_storm', name: 'Chaos Storm', icon: '🌪️', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e32, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ff4500, #ff6347 40%, #ff7f50 70%, #ffa07a)', mid: 'radial-gradient(circle at 30% 30%, #cc3700, #cc4f38 40%, #cc6540 70%, #cc8060)', dirty: 'radial-gradient(circle at 30% 30%, #802200, #803020 40%, #804030 70%, #805040)', dead: 'radial-gradient(circle at 30% 30%, #1a0a00, #1a0800 40%, #1a0600 70%, #1a0400)' }},
-                { id: 'pc_maelstrom', name: 'The Maelstrom', icon: '🌀', unlocked: false, cost: 1e75, multiplier: 1000, maxPollution: 1e33, pollution: 0,
+                { id: 'pc_maelstrom', name: 'The Maelstrom', icon: '🌀', unlocked: false, cost: 1e75, multiplier: 1000, maxPollution: 1e33, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #9932cc, #8b008b 40%, #800080 70%, #4b0082)', mid: 'radial-gradient(circle at 30% 30%, #6a1b9a, #5c007a 40%, #4a0066 70%, #380052)', dirty: 'radial-gradient(circle at 30% 30%, #3d0066, #2e004d 40%, #1f0033 70%, #10001a)', dead: 'radial-gradient(circle at 30% 30%, #0d000d, #080008 40%, #040004 70%, #000000)' }},
-                { id: 'pc_entropy', name: 'Entropy Core', icon: '💀', unlocked: false, cost: 1e78, multiplier: 100000, maxPollution: 1e34, pollution: 0,
+                { id: 'pc_entropy', name: 'Entropy Core', icon: '💀', unlocked: false, cost: 1e78, multiplier: 100000, maxPollution: 1e34, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #2f4f4f, #3c5a5a 40%, #4a6666 70%, #587272)', mid: 'radial-gradient(circle at 30% 30%, #1e3232, #283c3c 40%, #324646 70%, #3c5050)', dirty: 'radial-gradient(circle at 30% 30%, #0f1919, #141e1e 40%, #192323 70%, #1e2828)', dead: 'radial-gradient(circle at 30% 30%, #050808, #030505 40%, #010303 70%, #000000)' }}
             ],
             celestialforge: [
-                { id: 'cf_anvil', name: 'Star Anvil', icon: '🔨', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e35, pollution: 0,
+                { id: 'cf_anvil', name: 'Star Anvil', icon: '🔨', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e35, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffd700, #ffcc00 40%, #ffaa00 70%, #ff8800)', mid: 'radial-gradient(circle at 30% 30%, #ccaa00, #cc9900 40%, #cc8800 70%, #cc6600)', dirty: 'radial-gradient(circle at 30% 30%, #806600, #805500 40%, #804400 70%, #803300)', dead: 'radial-gradient(circle at 30% 30%, #1a1400, #1a1000 40%, #1a0c00 70%, #1a0800)' }},
-                { id: 'cf_furnace', name: 'Cosmic Furnace', icon: '🔥', unlocked: false, cost: 1e84, multiplier: 10000, maxPollution: 1e36, pollution: 0,
+                { id: 'cf_furnace', name: 'Cosmic Furnace', icon: '🔥', unlocked: false, cost: 1e84, multiplier: 10000, maxPollution: 1e36, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ff4500, #ff5500 40%, #ff6600 70%, #ff7700)', mid: 'radial-gradient(circle at 30% 30%, #cc3600, #cc4400 40%, #cc5200 70%, #cc6000)', dirty: 'radial-gradient(circle at 30% 30%, #802200, #802a00 40%, #803300 70%, #803c00)', dead: 'radial-gradient(circle at 30% 30%, #1a0800, #1a0600 40%, #1a0400 70%, #1a0200)' }},
-                { id: 'cf_creation', name: 'Creation Matrix', icon: '✨', unlocked: false, cost: 1e88, multiplier: 1000000, maxPollution: 1e37, pollution: 0,
+                { id: 'cf_creation', name: 'Creation Matrix', icon: '✨', unlocked: false, cost: 1e88, multiplier: 1000000, maxPollution: 1e37, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffffff, #fffacd 40%, #ffefd5 70%, #ffe4b5)', mid: 'radial-gradient(circle at 30% 30%, #cccca3, #ccbfa6 40%, #ccb8aa 70%, #ccb1ae)', dirty: 'radial-gradient(circle at 30% 30%, #666652, #665f53 40%, #665954 70%, #665356)', dead: 'radial-gradient(circle at 30% 30%, #1a1a14, #1a1814 40%, #1a1614 70%, #1a1414)' }}
             ],
             dreamscape: [
-                { id: 'ds_lucid', name: 'Lucid Core', icon: '💫', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e38, pollution: 0,
+                { id: 'ds_lucid', name: 'Lucid Core', icon: '💫', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e38, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #e6e6fa, #d8bfd8 40%, #dda0dd 70%, #ee82ee)', mid: 'radial-gradient(circle at 30% 30%, #b8b8c8, #ac98ac 40%, #b180b1 70%, #be68be)', dirty: 'radial-gradient(circle at 30% 30%, #5c5c64, #564c56 40%, #584058 70%, #5f345f)', dead: 'radial-gradient(circle at 30% 30%, #17171a, #141214 40%, #151015 70%, #170d17)' }},
-                { id: 'ds_nightmare', name: 'Nightmare Realm', icon: '👻', unlocked: false, cost: 1e93, multiplier: 50000, maxPollution: 1e39, pollution: 0,
+                { id: 'ds_nightmare', name: 'Nightmare Realm', icon: '👻', unlocked: false, cost: 1e93, multiplier: 50000, maxPollution: 1e39, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #2f2f4f, #3f3f5f 40%, #4f4f6f 70%, #5f5f7f)', mid: 'radial-gradient(circle at 30% 30%, #1f1f33, #2a2a44 40%, #353555 70%, #404066)', dirty: 'radial-gradient(circle at 30% 30%, #0f0f1a, #151522 40%, #1b1b2a 70%, #212133)', dead: 'radial-gradient(circle at 30% 30%, #050508, #03030a 40%, #01010c 70%, #00000f)' }},
-                { id: 'ds_fantasy', name: 'Fantasy Nexus', icon: '🦄', unlocked: false, cost: 1e97, multiplier: 10000000, maxPollution: 1e40, pollution: 0,
+                { id: 'ds_fantasy', name: 'Fantasy Nexus', icon: '🦄', unlocked: false, cost: 1e97, multiplier: 10000000, maxPollution: 1e40, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ff69b4, #ff1493 40%, #db7093 70%, #c71585)', mid: 'radial-gradient(circle at 30% 30%, #cc548f, #cc1076 40%, #af5a76 70%, #9f116a)', dirty: 'radial-gradient(circle at 30% 30%, #662a48, #66083b 40%, #582d3b 70%, #500935)', dead: 'radial-gradient(circle at 30% 30%, #1a0b12, #1a020f 40%, #160b0f 70%, #14020e)' }}
             ],
             nullspace: [
-                { id: 'ns_void', name: 'True Void', icon: '⬛', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e42, pollution: 0,
+                { id: 'ns_void', name: 'True Void', icon: '⬛', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e42, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #0a0a0a, #080808 40%, #060606 70%, #040404)', mid: 'radial-gradient(circle at 30% 30%, #050505, #040404 40%, #030303 70%, #020202)', dirty: 'radial-gradient(circle at 30% 30%, #020202, #010101 40%, #010101 70%, #000000)', dead: 'radial-gradient(circle at 30% 30%, #000000, #000000 40%, #000000 70%, #000000)' }},
-                { id: 'ns_null', name: 'Null Zone', icon: '🚫', unlocked: false, cost: 1e102, multiplier: 1000000, maxPollution: 1e43, pollution: 0,
+                { id: 'ns_null', name: 'Null Zone', icon: '🚫', unlocked: false, cost: 1e102, multiplier: 1000000, maxPollution: 1e43, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #1a1a1a, #151515 40%, #101010 70%, #0a0a0a)', mid: 'radial-gradient(circle at 30% 30%, #0d0d0d, #0a0a0a 40%, #080808 70%, #050505)', dirty: 'radial-gradient(circle at 30% 30%, #050505, #030303 40%, #020202 70%, #010101)', dead: 'radial-gradient(circle at 30% 30%, #000000, #000000 40%, #000000 70%, #000000)' }},
-                { id: 'ns_oblivion', name: 'Oblivion Gate', icon: '🌑', unlocked: false, cost: 1e106, multiplier: 1000000000, maxPollution: 1e44, pollution: 0,
+                { id: 'ns_oblivion', name: 'Oblivion Gate', icon: '🌑', unlocked: false, cost: 1e106, multiplier: 1000000000, maxPollution: 1e44, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #0f0f0f, #0c0c0c 40%, #090909 70%, #060606)', mid: 'radial-gradient(circle at 30% 30%, #080808, #060606 40%, #040404 70%, #030303)', dirty: 'radial-gradient(circle at 30% 30%, #030303, #020202 40%, #010101 70%, #000000)', dead: 'radial-gradient(circle at 30% 30%, #000000, #000000 40%, #000000 70%, #000000)' }}
             ],
             omnipotence: [
-                { id: 'op_sight', name: 'All-Seeing Eye', icon: '👁️', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e46, pollution: 0,
+                { id: 'op_sight', name: 'All-Seeing Eye', icon: '👁️', unlocked: true, cost: 0, multiplier: 1, maxPollution: 1e46, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffd700, #ffffff 20%, #ffd700 40%, #ffffff 60%, #ffd700 80%, #ffffff)', mid: 'radial-gradient(circle at 30% 30%, #ccaa00, #cccccc 20%, #ccaa00 40%, #cccccc 60%, #ccaa00 80%, #cccccc)', dirty: 'radial-gradient(circle at 30% 30%, #665500, #666666 20%, #665500 40%, #666666 60%, #665500 80%, #666666)', dead: 'radial-gradient(circle at 30% 30%, #1a1400, #1a1a1a 20%, #1a1400 40%, #1a1a1a 60%, #1a1400 80%, #1a1a1a)' }},
-                { id: 'op_hand', name: 'Hand of God', icon: '🤚', unlocked: false, cost: 1e111, multiplier: 1e9, maxPollution: 1e47, pollution: 0,
+                { id: 'op_hand', name: 'Hand of God', icon: '🤚', unlocked: false, cost: 1e111, multiplier: 1e9, maxPollution: 1e47, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffffff, #ffffd0 40%, #ffffb0 70%, #ffff90)', mid: 'radial-gradient(circle at 30% 30%, #cccca0, #ccc880 40%, #ccc460 70%, #ccc040)', dirty: 'radial-gradient(circle at 30% 30%, #666650, #666240 40%, #665e30 70%, #665a20)', dead: 'radial-gradient(circle at 30% 30%, #1a1a14, #1a1810 40%, #1a160c 70%, #1a1408)' }},
-                { id: 'op_throne', name: 'Divine Throne', icon: '👑', unlocked: false, cost: 1e115, multiplier: 1e12, maxPollution: 1e48, pollution: 0,
+                { id: 'op_throne', name: 'Divine Throne', icon: '👑', unlocked: false, cost: 1e115, multiplier: 1e12, maxPollution: 1e48, pollution: D(0),
                   colors: { clean: 'radial-gradient(circle at 30% 30%, #ffd700, #ffc000 40%, #ffb000 70%, #ffa000)', mid: 'radial-gradient(circle at 30% 30%, #cc9900, #cc8800 40%, #cc7700 70%, #cc6600)', dirty: 'radial-gradient(circle at 30% 30%, #664d00, #664400 40%, #663c00 70%, #663300)', dead: 'radial-gradient(circle at 30% 30%, #1a1400, #1a1100 40%, #1a0f00 70%, #1a0d00)' }}
             ]
         };
@@ -1953,15 +2112,15 @@
         let planetsDestroyed = 0;
 
         // Game State
-        let pollution = 0;
-        let pollutionPerClick = 1;
-        let pollutionPerSecond = 0;
-        let totalClicks = 0;
-        let totalPollution = 0;
+        let pollution = D(0);
+        let pollutionPerClick = D(1);
+        let pollutionPerSecond = D(0);
+        let totalClicks = D(0);
+        let totalPollution = D(0);
 
         // Toxic Waste System (like Sugar Lumps)
-        let toxicWaste = 0;
-        let toxicWasteProgress = 0;
+        let toxicWaste = D(0);
+        let toxicWasteProgress = D(0);
         let toxicWasteReady = false;
         const toxicWasteTime = 60000; // 1 minute to grow
         let lastToxicTime = Date.now();
@@ -1987,10 +2146,10 @@
         let toxicGoldenChance = 0;
 
         // Prestige System (Rebirth)
-        let carbonCredits = 0;
-        let lifetimePollution = 0; // Tracks pollution across all rebirths
+        let carbonCredits = D(0);
+        let lifetimePollution = D(0); // Tracks pollution across all rebirths
         let timesPrestiged = 0;
-        let prestigeMultiplier = 1;
+        let prestigeMultiplier = D(1);
 
         // Prestige Upgrades (permanent across rebirths)
         const prestigeUpgrades = [
@@ -2052,16 +2211,16 @@
             const currentLevel = getUpgradeLevel(upgradeId);
             if (currentLevel >= maxUpgradeLevel) return false;
             const cost = upgradeLevelCost(currentLevel);
-            return toxicWaste >= cost;
+            return toxicWaste.gte(cost);
         }
 
         function levelUpUpgrade(upgradeId) {
             const currentLevel = getUpgradeLevel(upgradeId);
             if (currentLevel >= maxUpgradeLevel) return;
             const cost = upgradeLevelCost(currentLevel);
-            if (toxicWaste < cost) return;
+            if (toxicWaste.lt(cost)) return;
 
-            toxicWaste -= cost;
+            toxicWaste = toxicWaste.sub(cost);
             upgradeLevels[upgradeId] = currentLevel + 1;
 
             const upgrade = upgrades.find(u => u.id === upgradeId);
@@ -2723,11 +2882,11 @@
             if (existingSave) {
                 // Load existing save for this mode
                 const data = JSON.parse(existingSave);
-                pollution = loadNumber(data.pollution, 0);
-                pollutionPerClick = loadNumber(data.pollutionPerClick, 1);
-                pollutionPerSecond = loadNumber(data.pollutionPerSecond, 0);
-                totalClicks = loadNumber(data.totalClicks, 0);
-                totalPollution = loadNumber(data.totalPollution, 0);
+                pollution = loadNumber(data.pollution, D(0));
+                pollutionPerClick = loadNumber(data.pollutionPerClick, D(1));
+                pollutionPerSecond = loadNumber(data.pollutionPerSecond, D(0));
+                totalClicks = loadNumber(data.totalClicks, D(0));
+                totalPollution = loadNumber(data.totalPollution, D(0));
                 if (data.currentPlanetPerSystem) {
                     Object.keys(currentPlanetPerSystem).forEach(k => currentPlanetPerSystem[k] = 0);
                     Object.assign(currentPlanetPerSystem, data.currentPlanetPerSystem);
@@ -2746,14 +2905,14 @@
                                 const planet = systemPlanets[sysId].find(p => p.id === savedPlanet.id);
                                 if (planet) {
                                     planet.unlocked = savedPlanet.unlocked;
-                                    planet.pollution = loadNumber(savedPlanet.pollution, 0);
+                                    planet.pollution = loadNumber(savedPlanet.pollution, D(0));
                                     planet.destroyed = savedPlanet.destroyed || false;
                                 }
                             });
                         }
                     });
                 }
-                toxicWaste = loadNumber(data.toxicWaste, 0);
+                toxicWaste = loadNumber(data.toxicWaste, D(0));
                 lastToxicTime = data.lastToxicTime || Date.now();
                 toxicClickMult = loadNumber(data.toxicClickMult, 1);
                 toxicAutoMult = loadNumber(data.toxicAutoMult, 1);
@@ -2777,10 +2936,10 @@
                         if (system) system.unlocked = savedSystem.unlocked;
                     });
                 }
-                carbonCredits = loadNumber(data.carbonCredits, 0);
-                lifetimePollution = loadNumber(data.lifetimePollution, 0);
+                carbonCredits = loadNumber(data.carbonCredits, D(0));
+                lifetimePollution = loadNumber(data.lifetimePollution, D(0));
                 timesPrestiged = data.timesPrestiged || 0;
-                prestigeMultiplier = loadNumber(data.prestigeMultiplier, 1);
+                prestigeMultiplier = loadNumber(data.prestigeMultiplier, D(1));
                 prestigeClickMult = loadNumber(data.prestigeClickMult, 1);
                 prestigeAutoMult = loadNumber(data.prestigeAutoMult, 1);
                 prestigeStartBonus = loadNumber(data.prestigeStartBonus, 0);
@@ -2838,7 +2997,7 @@
 
         function calculatePrestigeGain() {
             // Need at least 1 trillion total pollution to earn carbon credits
-            if (totalPollution < 1e12) return 0;
+            if (totalPollution.lt(1e12)) return 0;
             return Math.floor(Math.pow(totalPollution / 1e12, 0.5) * prestigeCreditBoost);
         }
 
@@ -2853,13 +3012,13 @@
                     mult *= upgrade.value;
                 }
             }
-            return mult * prestigePrestigeMult * (1 + credits * 0.1);
+            return D(mult).mul(prestigePrestigeMult).mul(D(1).add(D(credits).mul(0.1)));
         }
 
         function updatePrestigeDisplay() {
             carbonCreditsDisplay.textContent = formatNumber(carbonCredits);
             const potential = calculatePrestigeGain();
-            prestigePotentialDisplay.textContent = potential > 0 ? '+' + formatNumber(potential) : '0';
+            prestigePotentialDisplay.textContent = potential.gt(0) ? '+' + formatNumber(potential) : '0';
             prestigeMultDisplay.textContent = formatNumber(prestigeMultiplier);
 
             const futureCredits = carbonCredits + potential;
@@ -2977,8 +3136,8 @@
         }
 
         function buyPrestigeUpgrade(upgrade) {
-            if (carbonCredits >= upgrade.cost && upgrade.owned < upgrade.maxLevel) {
-                carbonCredits -= upgrade.cost;
+            if (carbonCredits.gte(upgrade.cost) && upgrade.owned < upgrade.maxLevel) {
+                carbonCredits = carbonCredits.sub(upgrade.cost);
                 upgrade.owned++;
                 upgrade.cost = Math.ceil(upgrade.cost * 2);
                 applyPrestigeUpgrade(upgrade);
@@ -2992,7 +3151,7 @@
         function renderPrestigeShop() {
             prestigeUpgradesShop.innerHTML = '';
             prestigeUpgrades.forEach(upgrade => {
-                const canAfford = carbonCredits >= upgrade.cost;
+                const canAfford = carbonCredits.gte(upgrade.cost);
                 const maxed = upgrade.owned >= upgrade.maxLevel;
                 const div = document.createElement('div');
                 div.className = 'prestige-upgrade' + (!canAfford && !maxed ? ' disabled' : '') + (maxed ? ' maxed' : '');
@@ -3016,8 +3175,8 @@
             if (gain < 1) return;
 
             // Award carbon credits
-            carbonCredits += gain;
-            lifetimePollution += totalPollution;
+            carbonCredits = carbonCredits.add(gain);
+            lifetimePollution = lifetimePollution.add(totalPollution);
             timesPrestiged++;
 
             // Recalculate prestige multiplier
@@ -3025,10 +3184,10 @@
 
             // Reset game state
             pollution = Math.pow(10, prestigeStartBonus); // Start bonus
-            pollutionPerClick = 1;
-            pollutionPerSecond = 0;
+            pollutionPerClick = D(1);
+            pollutionPerSecond = D(0);
             totalClicks = 0;
-            totalPollution = 0;
+            totalPollution = D(0);
             currentSystemIndex = 0;
             planetsDestroyed = 0;
 
@@ -3046,7 +3205,7 @@
             Object.values(systemPlanets).forEach(planetArray => {
                 planetArray.forEach((p, i) => {
                     p.unlocked = i === 0; // First planet in each system is unlocked
-                    p.pollution = 0;
+                    p.pollution = D(0);
                     p.destroyed = false;
                     p.newsShown = false;
                 });
@@ -3062,7 +3221,7 @@
 
             // Apply toxic start bonus
             if (prestigeToxicStart > 0) {
-                toxicWaste += prestigeToxicStart;
+                toxicWaste = toxicWaste.add(prestigeToxicStart);
             }
 
             // Play sound and update
@@ -3140,7 +3299,7 @@
             const system = solarSystems[index];
             planetNameDisplay.textContent = planet.name;
             currentPlanetNameDisplay.textContent = planet.name;
-            const totalMult = planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * prestigeMultiplier;
+            const totalMult = D(planet.multiplier).mul(prestigePlanetBoost).mul(system.multiplier).mul(prestigeSystemBoost).mul(prestigeMultiplier);
             multiplierDisplay.textContent = `Multiplier: x${formatNumber(totalMult)}`;
 
             // Refresh planet UI for new system
@@ -3157,7 +3316,7 @@
             solarSystems.forEach((system, index) => {
                 if (index === 0) return; // Skip Sol
                 const actualCost = getHardCost(system.cost);
-                const canAfford = pollution >= actualCost;
+                const canAfford = pollution.gte(actualCost);
                 const div = document.createElement('div');
                 div.className = 'toxic-upgrade' + (!canAfford && !system.unlocked ? ' disabled' : '') + (system.unlocked ? ' owned' : '');
                 div.setAttribute('data-system-index', index);
@@ -3185,8 +3344,8 @@
         function buySystem(index) {
             const system = solarSystems[index];
             const actualCost = getHardCost(system.cost);
-            if (pollution >= actualCost && !system.unlocked) {
-                pollution -= actualCost;
+            if (pollution.gte(actualCost) && !system.unlocked) {
+                pollution = pollution.sub(actualCost);
                 system.unlocked = true;
                 playSound('unlock');
                 newsText.innerHTML = `⭐ <span>${system.name}</span> UNLOCKED! ${system.description}`;
@@ -3236,13 +3395,13 @@
 
             // Check for golden waste
             if (Math.random() < toxicGoldenChance) {
-                amount *= 3;
+                amount = amount.mul(3);
                 newsText.innerHTML = "✨ <span>GOLDEN SLUDGE!</span> Triple toxic waste collected!";
             }
 
-            toxicWaste += amount;
+            toxicWaste = toxicWaste.add(amount);
             toxicWasteReady = false;
-            toxicWasteProgress = 0;
+            toxicWasteProgress = D(0);
             lastToxicTime = Date.now();
             toxicWasteDisplay.classList.remove('ready');
             playSound('toxic');
@@ -3286,8 +3445,8 @@
         }
 
         function buyToxicUpgrade(upgrade) {
-            if (toxicWaste >= upgrade.cost) {
-                toxicWaste -= upgrade.cost;
+            if (toxicWaste.gte(upgrade.cost)) {
+                toxicWaste = toxicWaste.sub(upgrade.cost);
                 upgrade.owned++;
                 upgrade.cost = Math.ceil(upgrade.cost * 2.5); // Cost increases
                 applyToxicUpgrade(upgrade);
@@ -3302,7 +3461,7 @@
         function renderToxicShop() {
             toxicShop.innerHTML = '';
             toxicUpgrades.forEach((upgrade, index) => {
-                const canAfford = toxicWaste >= upgrade.cost;
+                const canAfford = toxicWaste.gte(upgrade.cost);
                 const div = document.createElement('div');
                 div.className = 'toxic-upgrade' + (canAfford ? '' : ' disabled');
                 div.innerHTML = `
@@ -3348,8 +3507,9 @@
         }
 
         function getHardCost(cost) {
-            if (impossibleMode) return cost * impossibleModeMultiplier;
-            return hardMode ? cost * hardModeMultiplier : cost;
+            const c = D(cost);
+            if (impossibleMode) return c.mul(impossibleModeMultiplier);
+            return hardMode ? c.mul(hardModeMultiplier) : c;
         }
 
         function getSaveKey() {
@@ -3360,14 +3520,14 @@
         function resetGameState() {
             // Reset core stats
             pollution = 0;
-            pollutionPerClick = 1;
-            pollutionPerSecond = 0;
+            pollutionPerClick = D(1);
+            pollutionPerSecond = D(0);
             totalClicks = 0;
-            totalPollution = 0;
+            totalPollution = D(0);
 
             // Reset toxic waste
-            toxicWaste = 0;
-            toxicWasteProgress = 0;
+            toxicWaste = D(0);
+            toxicWasteProgress = D(0);
             toxicWasteReady = false;
             lastToxicTime = Date.now();
             toxicClickMult = 1;
@@ -3386,10 +3546,10 @@
             });
 
             // Reset prestige (but keep lifetime stats for story)
-            carbonCredits = 0;
+            carbonCredits = D(0);
             lifetimePollution = 0;
             timesPrestiged = 0;
-            prestigeMultiplier = 1;
+            prestigeMultiplier = D(1);
             prestigeClickMult = 1;
             prestigeAutoMult = 1;
             prestigeStartBonus = 0;
@@ -3431,7 +3591,7 @@
             Object.values(systemPlanets).forEach(planets => {
                 planets.forEach((p, i) => {
                     p.unlocked = (i === 0);
-                    p.pollution = 0;
+                    p.pollution = D(0);
                     p.destroyed = false;
                 });
             });
@@ -3440,120 +3600,128 @@
         }
 
         function formatNumber(num) {
-            if (!isFinite(num)) return '∞ INFINITY';
-            // Beyond Centillion - use scientific notation with fun names
-            if (num >= 1e306) {
-                const exp = Math.floor(Math.log10(num));
-                return (num / Math.pow(10, exp)).toFixed(2) + 'e' + exp + ' (BEYOND)';
+            // Convert to Decimal if not already
+            if (!(num instanceof Decimal)) num = D(num);
+            if (num.isInfinite()) return '∞ INFINITY';
+            if (num.isZero() || (num.e < 3 && num.m >= 0)) {
+                const n = num.toNumber();
+                if (n < 1000) return Math.floor(n).toString();
             }
-            if (num >= 1e303) return (num / 1e303).toFixed(2) + 'Ce';
-            if (num >= 1e300) return (num / 1e300).toFixed(2) + 'NvNg';
-            if (num >= 1e297) return (num / 1e297).toFixed(2) + 'OcNg';
-            if (num >= 1e294) return (num / 1e294).toFixed(2) + 'SpNg';
-            if (num >= 1e291) return (num / 1e291).toFixed(2) + 'SxNg';
-            if (num >= 1e288) return (num / 1e288).toFixed(2) + 'QiNg';
-            if (num >= 1e285) return (num / 1e285).toFixed(2) + 'QaNg';
-            if (num >= 1e282) return (num / 1e282).toFixed(2) + 'TNg';
-            if (num >= 1e279) return (num / 1e279).toFixed(2) + 'DuNg';
-            if (num >= 1e276) return (num / 1e276).toFixed(2) + 'UNg';
-            if (num >= 1e273) return (num / 1e273).toFixed(2) + 'Ng';
-            if (num >= 1e270) return (num / 1e270).toFixed(2) + 'NvOg';
-            if (num >= 1e267) return (num / 1e267).toFixed(2) + 'OcOg';
-            if (num >= 1e264) return (num / 1e264).toFixed(2) + 'SpOg';
-            if (num >= 1e261) return (num / 1e261).toFixed(2) + 'SxOg';
-            if (num >= 1e258) return (num / 1e258).toFixed(2) + 'QiOg';
-            if (num >= 1e255) return (num / 1e255).toFixed(2) + 'QaOg';
-            if (num >= 1e252) return (num / 1e252).toFixed(2) + 'TOg';
-            if (num >= 1e249) return (num / 1e249).toFixed(2) + 'DuOg';
-            if (num >= 1e246) return (num / 1e246).toFixed(2) + 'UOg';
-            if (num >= 1e243) return (num / 1e243).toFixed(2) + 'Og';
-            if (num >= 1e240) return (num / 1e240).toFixed(2) + 'NvSg';
-            if (num >= 1e237) return (num / 1e237).toFixed(2) + 'OcSg';
-            if (num >= 1e234) return (num / 1e234).toFixed(2) + 'SpSg';
-            if (num >= 1e231) return (num / 1e231).toFixed(2) + 'SxSg';
-            if (num >= 1e228) return (num / 1e228).toFixed(2) + 'QiSg';
-            if (num >= 1e225) return (num / 1e225).toFixed(2) + 'QaSg';
-            if (num >= 1e222) return (num / 1e222).toFixed(2) + 'TSg';
-            if (num >= 1e219) return (num / 1e219).toFixed(2) + 'DuSg';
-            if (num >= 1e216) return (num / 1e216).toFixed(2) + 'USg';
-            if (num >= 1e213) return (num / 1e213).toFixed(2) + 'Sg';
-            if (num >= 1e210) return (num / 1e210).toFixed(2) + 'NvSxg';
-            if (num >= 1e207) return (num / 1e207).toFixed(2) + 'OcSxg';
-            if (num >= 1e204) return (num / 1e204).toFixed(2) + 'SpSxg';
-            if (num >= 1e201) return (num / 1e201).toFixed(2) + 'SxSxg';
-            if (num >= 1e198) return (num / 1e198).toFixed(2) + 'QiSxg';
-            if (num >= 1e195) return (num / 1e195).toFixed(2) + 'QaSxg';
-            if (num >= 1e192) return (num / 1e192).toFixed(2) + 'TSxg';
-            if (num >= 1e189) return (num / 1e189).toFixed(2) + 'DuSxg';
-            if (num >= 1e186) return (num / 1e186).toFixed(2) + 'USxg';
-            if (num >= 1e183) return (num / 1e183).toFixed(2) + 'Sxg';
-            if (num >= 1e180) return (num / 1e180).toFixed(2) + 'NvQig';
-            if (num >= 1e177) return (num / 1e177).toFixed(2) + 'OcQig';
-            if (num >= 1e174) return (num / 1e174).toFixed(2) + 'SpQig';
-            if (num >= 1e171) return (num / 1e171).toFixed(2) + 'SxQig';
-            if (num >= 1e168) return (num / 1e168).toFixed(2) + 'QiQig';
-            if (num >= 1e165) return (num / 1e165).toFixed(2) + 'QaQig';
-            if (num >= 1e162) return (num / 1e162).toFixed(2) + 'TQig';
-            if (num >= 1e159) return (num / 1e159).toFixed(2) + 'DuQig';
-            if (num >= 1e156) return (num / 1e156).toFixed(2) + 'UQig';
-            if (num >= 1e153) return (num / 1e153).toFixed(2) + 'Qig';
-            if (num >= 1e150) return (num / 1e150).toFixed(2) + 'NvQag';
-            if (num >= 1e147) return (num / 1e147).toFixed(2) + 'OcQag';
-            if (num >= 1e144) return (num / 1e144).toFixed(2) + 'SpQag';
-            if (num >= 1e141) return (num / 1e141).toFixed(2) + 'SxQag';
-            if (num >= 1e138) return (num / 1e138).toFixed(2) + 'QiQag';
-            if (num >= 1e135) return (num / 1e135).toFixed(2) + 'QaQag';
-            if (num >= 1e132) return (num / 1e132).toFixed(2) + 'TQag';
-            if (num >= 1e129) return (num / 1e129).toFixed(2) + 'DuQag';
-            if (num >= 1e126) return (num / 1e126).toFixed(2) + 'UQag';
-            if (num >= 1e123) return (num / 1e123).toFixed(2) + 'Qag';
-            if (num >= 1e120) return (num / 1e120).toFixed(2) + 'NvTg';
-            if (num >= 1e117) return (num / 1e117).toFixed(2) + 'OcTg';
-            if (num >= 1e114) return (num / 1e114).toFixed(2) + 'SpTg';
-            if (num >= 1e111) return (num / 1e111).toFixed(2) + 'SxTg';
-            if (num >= 1e108) return (num / 1e108).toFixed(2) + 'QiTg';
-            if (num >= 1e105) return (num / 1e105).toFixed(2) + 'QaTg';
-            if (num >= 1e102) return (num / 1e102).toFixed(2) + 'TTg';
-            if (num >= 1e100) return (num / 1e100).toFixed(2) + 'Go';
-            if (num >= 1e99) return (num / 1e99).toFixed(2) + 'DuTg';
-            if (num >= 1e96) return (num / 1e96).toFixed(2) + 'UTg';
-            if (num >= 1e93) return (num / 1e93).toFixed(2) + 'Tg';
-            if (num >= 1e90) return (num / 1e90).toFixed(2) + 'NvVg';
-            if (num >= 1e87) return (num / 1e87).toFixed(2) + 'OcVg';
-            if (num >= 1e84) return (num / 1e84).toFixed(2) + 'SpVg';
-            if (num >= 1e81) return (num / 1e81).toFixed(2) + 'SxVg';
-            if (num >= 1e78) return (num / 1e78).toFixed(2) + 'QiVg';
-            if (num >= 1e75) return (num / 1e75).toFixed(2) + 'QaVg';
-            if (num >= 1e72) return (num / 1e72).toFixed(2) + 'TVg';
-            if (num >= 1e69) return (num / 1e69).toFixed(2) + 'DuVg';
-            if (num >= 1e66) return (num / 1e66).toFixed(2) + 'UVg';
-            if (num >= 1e63) return (num / 1e63).toFixed(2) + 'Vg';
-            if (num >= 1e60) return (num / 1e60).toFixed(2) + 'NvD';
-            if (num >= 1e57) return (num / 1e57).toFixed(2) + 'OcD';
-            if (num >= 1e54) return (num / 1e54).toFixed(2) + 'SpD';
-            if (num >= 1e51) return (num / 1e51).toFixed(2) + 'SxD';
-            if (num >= 1e48) return (num / 1e48).toFixed(2) + 'QiD';
-            if (num >= 1e45) return (num / 1e45).toFixed(2) + 'QaD';
-            if (num >= 1e42) return (num / 1e42).toFixed(2) + 'TD';
-            if (num >= 1e39) return (num / 1e39).toFixed(2) + 'DuD';
-            if (num >= 1e36) return (num / 1e36).toFixed(2) + 'UD';
-            if (num >= 1e33) return (num / 1e33).toFixed(2) + 'Dc';
-            if (num >= 1e30) return (num / 1e30).toFixed(2) + 'No';
-            if (num >= 1e27) return (num / 1e27).toFixed(2) + 'Oc';
-            if (num >= 1e24) return (num / 1e24).toFixed(2) + 'Sp';
-            if (num >= 1e21) return (num / 1e21).toFixed(2) + 'Sx';
-            if (num >= 1e18) return (num / 1e18).toFixed(2) + 'Qi';
-            if (num >= 1e15) return (num / 1e15).toFixed(2) + 'Q';
-            if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
-            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
-            return Math.floor(num).toString();
+            // Use exponent for suffix lookup
+            const exp = num.e;
+            const mantissa = num.m;
+            // Beyond Centillion
+            if (exp >= 306) {
+                return mantissa.toFixed(2) + 'e' + exp + ' (BEYOND)';
+            }
+            if (exp >= 303) return (mantissa * Math.pow(10, exp - 303)).toFixed(2) + 'Ce';
+            if (exp >= 300) return (mantissa * Math.pow(10, exp - 300)).toFixed(2) + 'NvNg';
+            if (exp >= 297) return (mantissa * Math.pow(10, exp - 297)).toFixed(2) + 'OcNg';
+            if (exp >= 294) return (mantissa * Math.pow(10, exp - 294)).toFixed(2) + 'SpNg';
+            if (exp >= 291) return (mantissa * Math.pow(10, exp - 291)).toFixed(2) + 'SxNg';
+            if (exp >= 288) return (mantissa * Math.pow(10, exp - 288)).toFixed(2) + 'QiNg';
+            if (exp >= 285) return (mantissa * Math.pow(10, exp - 285)).toFixed(2) + 'QaNg';
+            if (exp >= 282) return (mantissa * Math.pow(10, exp - 282)).toFixed(2) + 'TNg';
+            if (exp >= 279) return (mantissa * Math.pow(10, exp - 279)).toFixed(2) + 'DuNg';
+            if (exp >= 276) return (mantissa * Math.pow(10, exp - 276)).toFixed(2) + 'UNg';
+            if (exp >= 273) return (mantissa * Math.pow(10, exp - 273)).toFixed(2) + 'Ng';
+            if (exp >= 270) return (mantissa * Math.pow(10, exp - 270)).toFixed(2) + 'NvOg';
+            if (exp >= 267) return (mantissa * Math.pow(10, exp - 267)).toFixed(2) + 'OcOg';
+            if (exp >= 264) return (mantissa * Math.pow(10, exp - 264)).toFixed(2) + 'SpOg';
+            if (exp >= 261) return (mantissa * Math.pow(10, exp - 261)).toFixed(2) + 'SxOg';
+            if (exp >= 258) return (mantissa * Math.pow(10, exp - 258)).toFixed(2) + 'QiOg';
+            if (exp >= 255) return (mantissa * Math.pow(10, exp - 255)).toFixed(2) + 'QaOg';
+            if (exp >= 252) return (mantissa * Math.pow(10, exp - 252)).toFixed(2) + 'TOg';
+            if (exp >= 249) return (mantissa * Math.pow(10, exp - 249)).toFixed(2) + 'DuOg';
+            if (exp >= 246) return (mantissa * Math.pow(10, exp - 246)).toFixed(2) + 'UOg';
+            if (exp >= 243) return (mantissa * Math.pow(10, exp - 243)).toFixed(2) + 'Og';
+            if (exp >= 240) return (mantissa * Math.pow(10, exp - 240)).toFixed(2) + 'NvSg';
+            if (exp >= 237) return (mantissa * Math.pow(10, exp - 237)).toFixed(2) + 'OcSg';
+            if (exp >= 234) return (mantissa * Math.pow(10, exp - 234)).toFixed(2) + 'SpSg';
+            if (exp >= 231) return (mantissa * Math.pow(10, exp - 231)).toFixed(2) + 'SxSg';
+            if (exp >= 228) return (mantissa * Math.pow(10, exp - 228)).toFixed(2) + 'QiSg';
+            if (exp >= 225) return (mantissa * Math.pow(10, exp - 225)).toFixed(2) + 'QaSg';
+            if (exp >= 222) return (mantissa * Math.pow(10, exp - 222)).toFixed(2) + 'TSg';
+            if (exp >= 219) return (mantissa * Math.pow(10, exp - 219)).toFixed(2) + 'DuSg';
+            if (exp >= 216) return (mantissa * Math.pow(10, exp - 216)).toFixed(2) + 'USg';
+            if (exp >= 213) return (mantissa * Math.pow(10, exp - 213)).toFixed(2) + 'Sg';
+            if (exp >= 210) return (mantissa * Math.pow(10, exp - 210)).toFixed(2) + 'NvSxg';
+            if (exp >= 207) return (mantissa * Math.pow(10, exp - 207)).toFixed(2) + 'OcSxg';
+            if (exp >= 204) return (mantissa * Math.pow(10, exp - 204)).toFixed(2) + 'SpSxg';
+            if (exp >= 201) return (mantissa * Math.pow(10, exp - 201)).toFixed(2) + 'SxSxg';
+            if (exp >= 198) return (mantissa * Math.pow(10, exp - 198)).toFixed(2) + 'QiSxg';
+            if (exp >= 195) return (mantissa * Math.pow(10, exp - 195)).toFixed(2) + 'QaSxg';
+            if (exp >= 192) return (mantissa * Math.pow(10, exp - 192)).toFixed(2) + 'TSxg';
+            if (exp >= 189) return (mantissa * Math.pow(10, exp - 189)).toFixed(2) + 'DuSxg';
+            if (exp >= 186) return (mantissa * Math.pow(10, exp - 186)).toFixed(2) + 'USxg';
+            if (exp >= 183) return (mantissa * Math.pow(10, exp - 183)).toFixed(2) + 'Sxg';
+            if (exp >= 180) return (mantissa * Math.pow(10, exp - 180)).toFixed(2) + 'NvQig';
+            if (exp >= 177) return (mantissa * Math.pow(10, exp - 177)).toFixed(2) + 'OcQig';
+            if (exp >= 174) return (mantissa * Math.pow(10, exp - 174)).toFixed(2) + 'SpQig';
+            if (exp >= 171) return (mantissa * Math.pow(10, exp - 171)).toFixed(2) + 'SxQig';
+            if (exp >= 168) return (mantissa * Math.pow(10, exp - 168)).toFixed(2) + 'QiQig';
+            if (exp >= 165) return (mantissa * Math.pow(10, exp - 165)).toFixed(2) + 'QaQig';
+            if (exp >= 162) return (mantissa * Math.pow(10, exp - 162)).toFixed(2) + 'TQig';
+            if (exp >= 159) return (mantissa * Math.pow(10, exp - 159)).toFixed(2) + 'DuQig';
+            if (exp >= 156) return (mantissa * Math.pow(10, exp - 156)).toFixed(2) + 'UQig';
+            if (exp >= 153) return (mantissa * Math.pow(10, exp - 153)).toFixed(2) + 'Qig';
+            if (exp >= 150) return (mantissa * Math.pow(10, exp - 150)).toFixed(2) + 'NvQag';
+            if (exp >= 147) return (mantissa * Math.pow(10, exp - 147)).toFixed(2) + 'OcQag';
+            if (exp >= 144) return (mantissa * Math.pow(10, exp - 144)).toFixed(2) + 'SpQag';
+            if (exp >= 141) return (mantissa * Math.pow(10, exp - 141)).toFixed(2) + 'SxQag';
+            if (exp >= 138) return (mantissa * Math.pow(10, exp - 138)).toFixed(2) + 'QiQag';
+            if (exp >= 135) return (mantissa * Math.pow(10, exp - 135)).toFixed(2) + 'QaQag';
+            if (exp >= 132) return (mantissa * Math.pow(10, exp - 132)).toFixed(2) + 'TQag';
+            if (exp >= 129) return (mantissa * Math.pow(10, exp - 129)).toFixed(2) + 'DuQag';
+            if (exp >= 126) return (mantissa * Math.pow(10, exp - 126)).toFixed(2) + 'UQag';
+            if (exp >= 123) return (mantissa * Math.pow(10, exp - 123)).toFixed(2) + 'Qag';
+            if (exp >= 120) return (mantissa * Math.pow(10, exp - 120)).toFixed(2) + 'NvTg';
+            if (exp >= 117) return (mantissa * Math.pow(10, exp - 117)).toFixed(2) + 'OcTg';
+            if (exp >= 114) return (mantissa * Math.pow(10, exp - 114)).toFixed(2) + 'SpTg';
+            if (exp >= 111) return (mantissa * Math.pow(10, exp - 111)).toFixed(2) + 'SxTg';
+            if (exp >= 108) return (mantissa * Math.pow(10, exp - 108)).toFixed(2) + 'QiTg';
+            if (exp >= 105) return (mantissa * Math.pow(10, exp - 105)).toFixed(2) + 'QaTg';
+            if (exp >= 102) return (mantissa * Math.pow(10, exp - 102)).toFixed(2) + 'TTg';
+            if (exp >= 100 && exp < 102) return (mantissa * Math.pow(10, exp - 100)).toFixed(2) + 'Go';
+            if (exp >= 99) return (mantissa * Math.pow(10, exp - 99)).toFixed(2) + 'DuTg';
+            if (exp >= 96) return (mantissa * Math.pow(10, exp - 96)).toFixed(2) + 'UTg';
+            if (exp >= 93) return (mantissa * Math.pow(10, exp - 93)).toFixed(2) + 'Tg';
+            if (exp >= 90) return (mantissa * Math.pow(10, exp - 90)).toFixed(2) + 'NvVg';
+            if (exp >= 87) return (mantissa * Math.pow(10, exp - 87)).toFixed(2) + 'OcVg';
+            if (exp >= 84) return (mantissa * Math.pow(10, exp - 84)).toFixed(2) + 'SpVg';
+            if (exp >= 81) return (mantissa * Math.pow(10, exp - 81)).toFixed(2) + 'SxVg';
+            if (exp >= 78) return (mantissa * Math.pow(10, exp - 78)).toFixed(2) + 'QiVg';
+            if (exp >= 75) return (mantissa * Math.pow(10, exp - 75)).toFixed(2) + 'QaVg';
+            if (exp >= 72) return (mantissa * Math.pow(10, exp - 72)).toFixed(2) + 'TVg';
+            if (exp >= 69) return (mantissa * Math.pow(10, exp - 69)).toFixed(2) + 'DuVg';
+            if (exp >= 66) return (mantissa * Math.pow(10, exp - 66)).toFixed(2) + 'UVg';
+            if (exp >= 63) return (mantissa * Math.pow(10, exp - 63)).toFixed(2) + 'Vg';
+            if (exp >= 60) return (mantissa * Math.pow(10, exp - 60)).toFixed(2) + 'NvD';
+            if (exp >= 57) return (mantissa * Math.pow(10, exp - 57)).toFixed(2) + 'OcD';
+            if (exp >= 54) return (mantissa * Math.pow(10, exp - 54)).toFixed(2) + 'SpD';
+            if (exp >= 51) return (mantissa * Math.pow(10, exp - 51)).toFixed(2) + 'SxD';
+            if (exp >= 48) return (mantissa * Math.pow(10, exp - 48)).toFixed(2) + 'QiD';
+            if (exp >= 45) return (mantissa * Math.pow(10, exp - 45)).toFixed(2) + 'QaD';
+            if (exp >= 42) return (mantissa * Math.pow(10, exp - 42)).toFixed(2) + 'TD';
+            if (exp >= 39) return (mantissa * Math.pow(10, exp - 39)).toFixed(2) + 'DuD';
+            if (exp >= 36) return (mantissa * Math.pow(10, exp - 36)).toFixed(2) + 'UD';
+            if (exp >= 33) return (mantissa * Math.pow(10, exp - 33)).toFixed(2) + 'Dc';
+            if (exp >= 30) return (mantissa * Math.pow(10, exp - 30)).toFixed(2) + 'No';
+            if (exp >= 27) return (mantissa * Math.pow(10, exp - 27)).toFixed(2) + 'Oc';
+            if (exp >= 24) return (mantissa * Math.pow(10, exp - 24)).toFixed(2) + 'Sp';
+            if (exp >= 21) return (mantissa * Math.pow(10, exp - 21)).toFixed(2) + 'Sx';
+            if (exp >= 18) return (mantissa * Math.pow(10, exp - 18)).toFixed(2) + 'Qi';
+            if (exp >= 15) return (mantissa * Math.pow(10, exp - 15)).toFixed(2) + 'Q';
+            if (exp >= 12) return (mantissa * Math.pow(10, exp - 12)).toFixed(2) + 'T';
+            if (exp >= 9) return (mantissa * Math.pow(10, exp - 9)).toFixed(2) + 'B';
+            if (exp >= 6) return (mantissa * Math.pow(10, exp - 6)).toFixed(2) + 'M';
+            if (exp >= 3) return (mantissa * Math.pow(10, exp - 3)).toFixed(2) + 'K';
+            return Math.floor(num.toNumber()).toString();
         }
 
         function updatePlanetAppearance() {
             const planet = getCurrentPlanet();
-            const percent = Math.min((planet.pollution / planet.maxPollution) * 100, 100);
+            const percent = Math.min(D(planet.pollution).div(planet.maxPollution).mul(100).toNumber(), 100);
             const smogOpacity = Math.min(percent / 100, 0.7);
 
             smogLayer.style.background = `radial-gradient(circle,
@@ -3612,7 +3780,7 @@
             const planet = getCurrentPlanet();
             planetNameDisplay.textContent = planet.name;
             currentPlanetNameDisplay.textContent = planet.name;
-            const totalMult = planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * prestigeMultiplier;
+            const totalMult = D(planet.multiplier).mul(prestigePlanetBoost).mul(system.multiplier).mul(prestigeSystemBoost).mul(prestigeMultiplier);
             multiplierDisplay.textContent = `Multiplier: x${formatNumber(totalMult)}`;
             renderPlanetTabs();
             updatePlanetAppearance();
@@ -3625,7 +3793,7 @@
             currentPlanets.forEach((planet, index) => {
                 if (index === 0) return; // Skip first planet (always unlocked)
                 const actualCost = getHardCost(planet.cost);
-                const canAfford = pollution >= actualCost;
+                const canAfford = pollution.gte(actualCost);
                 const div = document.createElement('div');
                 div.className = 'planet-item' + (!canAfford && !planet.unlocked ? ' disabled' : '') + (planet.unlocked ? ' owned' : '');
                 div.setAttribute('data-planet-index', index);
@@ -3655,8 +3823,8 @@
             const currentPlanets = getCurrentSystemPlanets();
             const planet = currentPlanets[index];
             const actualCost = getHardCost(planet.cost);
-            if (pollution >= actualCost && !planet.unlocked) {
-                pollution -= actualCost;
+            if (pollution.gte(actualCost) && !planet.unlocked) {
+                pollution = pollution.sub(actualCost);
                 planet.unlocked = true;
                 playSound('unlock');
                 renderPlanetTabs();
@@ -3688,7 +3856,7 @@
         function updateDisplay() {
             const planet = getCurrentPlanet();
             const system = getCurrentSystem();
-            const totalMult = planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * prestigeMultiplier;
+            const totalMult = D(planet.multiplier).mul(prestigePlanetBoost).mul(system.multiplier).mul(prestigeSystemBoost).mul(prestigeMultiplier);
             const clickPower = calculateClickPower();
             const autoPower = calculateAutoPower();
             pollutionDisplay.textContent = formatNumber(pollution);
@@ -3707,7 +3875,7 @@
             items.forEach((item, index) => {
                 if (upgrades[index]) {
                     const cost = getCost(upgrades[index]);
-                    const canAfford = pollution >= cost;
+                    const canAfford = pollution.gte(cost);
                     item.classList.toggle('disabled', !canAfford);
                 }
             });
@@ -3720,7 +3888,7 @@
                 const index = parseInt(item.getAttribute('data-planet-index'));
                 if (!isNaN(index) && currentPlanets[index] && !currentPlanets[index].unlocked) {
                     const actualCost = getHardCost(currentPlanets[index].cost);
-                    const canAfford = pollution >= actualCost;
+                    const canAfford = pollution.gte(actualCost);
                     item.classList.toggle('disabled', !canAfford);
                 }
             });
@@ -3732,7 +3900,7 @@
                 const index = parseInt(item.getAttribute('data-system-index'));
                 if (!isNaN(index) && solarSystems[index] && !solarSystems[index].unlocked) {
                     const actualCost = getHardCost(solarSystems[index].cost);
-                    const canAfford = pollution >= actualCost;
+                    const canAfford = pollution.gte(actualCost);
                     item.classList.toggle('disabled', !canAfford);
                 }
             });
@@ -3742,10 +3910,10 @@
             upgradesContainer.innerHTML = '';
             upgrades.forEach((upgrade, index) => {
                 const cost = getCost(upgrade);
-                const canAfford = pollution >= cost;
+                const canAfford = pollution.gte(cost);
                 const level = getUpgradeLevel(upgrade.id);
                 const levelCost = upgradeLevelCost(level);
-                const canLevel = level < maxUpgradeLevel && toxicWaste >= levelCost;
+                const canLevel = level < maxUpgradeLevel && toxicWaste.gte(levelCost);
                 const levelMult = getUpgradeLevelMultiplier(upgrade.id);
 
                 const div = document.createElement('div');
@@ -3794,14 +3962,14 @@
 
         function buyUpgrade(upgrade) {
             const cost = getCost(upgrade);
-            if (pollution >= cost) {
+            if (pollution.gte(cost)) {
                 const wasFirstPurchase = upgrade.owned === 0;
-                pollution -= cost;
+                pollution = pollution.sub(cost);
                 upgrade.owned++;
                 if (upgrade.type === 'click') {
-                    pollutionPerClick += upgrade.power;
+                    pollutionPerClick = pollutionPerClick.add(upgrade.power);
                 } else if (upgrade.type === 'auto') {
-                    pollutionPerSecond += upgrade.power;
+                    pollutionPerSecond = pollutionPerSecond.add(upgrade.power);
                 }
                 // Show news on first purchase
                 if (wasFirstPurchase && storyMessages.upgrades[upgrade.id]) {
@@ -3821,17 +3989,17 @@
             const planet = getCurrentPlanet();
             const system = getCurrentSystem();
             const clickPower = calculateClickPower();
-            let amount = clickPower * planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * toxicClickMult * toxicPlanetMult * prestigeClickMult * prestigeMultiplier;
+            let amount = clickPower.mul(planet.multiplier).mul(prestigePlanetBoost).mul(system.multiplier).mul(prestigeSystemBoost).mul(toxicClickMult).mul(toxicPlanetMult).mul(prestigeClickMult).mul(prestigeMultiplier);
 
             // Double click chance from Quantum Pollution upgrade
             if (Math.random() < prestigeDoubleClickChance) {
-                amount *= 2;
+                amount = amount.mul(2);
             }
 
-            pollution += amount;
-            planet.pollution += amount;
-            totalClicks++;
-            totalPollution += amount;
+            pollution = pollution.add(amount);
+            planet.pollution = D(planet.pollution).add(amount);
+            totalClicks = totalClicks.add(1);
+            totalPollution = totalPollution.add(amount);
 
             const rect = globeBtn.getBoundingClientRect();
             const x = e.clientX || (rect.left + rect.width / 2);
@@ -3852,16 +4020,16 @@
             const planet = getCurrentPlanet();
             const system = getCurrentSystem();
             const clickPower = calculateClickPower();
-            let amount = clickPower * planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * toxicClickMult * toxicPlanetMult * prestigeClickMult * prestigeMultiplier;
+            let amount = clickPower.mul(planet.multiplier).mul(prestigePlanetBoost).mul(system.multiplier).mul(prestigeSystemBoost).mul(toxicClickMult).mul(toxicPlanetMult).mul(prestigeClickMult).mul(prestigeMultiplier);
 
             if (Math.random() < prestigeDoubleClickChance) {
-                amount *= 2;
+                amount = amount.mul(2);
             }
 
-            pollution += amount;
-            planet.pollution += amount;
-            totalClicks++;
-            totalPollution += amount;
+            pollution = pollution.add(amount);
+            planet.pollution = D(planet.pollution).add(amount);
+            totalClicks = totalClicks.add(1);
+            totalPollution = totalPollution.add(amount);
 
             const rect = globeBtn.getBoundingClientRect();
             createParticle(rect.left + rect.width / 2 - 20, rect.top + rect.height / 2 - 20, amount);
@@ -3876,8 +4044,12 @@
 
         document.addEventListener('keydown', (e) => {
             // Don't capture keys when typing in an input field
-            const tag = document.activeElement.tagName;
-            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+            const el = document.activeElement;
+            if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)) return;
+
+            // Don't capture keys when main menu is visible
+            const menu = document.getElementById('main-menu');
+            if (menu && !menu.classList.contains('hidden')) return;
 
             // Check if it's a letter (a-z), space, or enter
             const isLetter = e.key.length === 1 && /[a-zA-Z]/.test(e.key);
@@ -3892,13 +4064,13 @@
 
         setInterval(() => {
             const autoPower = calculateAutoPower();
-            if (autoPower > 0) {
+            if (autoPower.gt(0)) {
                 const planet = getCurrentPlanet();
                 const system = getCurrentSystem();
-                const amount = (autoPower * planet.multiplier * prestigePlanetBoost * system.multiplier * prestigeSystemBoost * toxicAutoMult * toxicPlanetMult * prestigeAutoMult * prestigeMultiplier) / 10;
-                pollution += amount;
-                planet.pollution += amount;
-                totalPollution += amount;
+                const amount = autoPower.mul(planet.multiplier).mul(prestigePlanetBoost).mul(system.multiplier).mul(prestigeSystemBoost).mul(toxicAutoMult).mul(toxicPlanetMult).mul(prestigeAutoMult).mul(prestigeMultiplier).div(10);
+                pollution = pollution.add(amount);
+                planet.pollution = D(planet.pollution).add(amount);
+                totalPollution = totalPollution.add(amount);
                 updateDisplay();
 
                 if (Math.random() < 0.3) {
@@ -3913,9 +4085,9 @@
             if (deforestUpgrade && deforestUpgrade.owned > 0) {
                 // Cleaners steal 0.5% of your pollution per second, scaling with how many you own
                 const cleanerRate = 0.005 * deforestUpgrade.owned;
-                const stolen = pollution * cleanerRate / 10; // Divided by 10 since this runs every 100ms
-                if (stolen > 0 && pollution > stolen) {
-                    pollution -= stolen;
+                const stolen = pollution.mul(cleanerRate).div(10);
+                if (stolen.gt(0) && pollution.gt(stolen)) {
+                    pollution = pollution.sub(stolen);
                     // Show cleaner stealing effect occasionally
                     if (Math.random() < 0.1) {
                         const floater = document.createElement('div');
@@ -4028,11 +4200,11 @@
             const saved = localStorage.getItem(getSaveKey());
             if (saved) {
                 const data = JSON.parse(saved);
-                pollution = loadNumber(data.pollution, 0);
-                pollutionPerClick = loadNumber(data.pollutionPerClick, 1);
-                pollutionPerSecond = loadNumber(data.pollutionPerSecond, 0);
-                totalClicks = loadNumber(data.totalClicks, 0);
-                totalPollution = loadNumber(data.totalPollution, 0);
+                pollution = loadNumber(data.pollution, D(0));
+                pollutionPerClick = loadNumber(data.pollutionPerClick, D(1));
+                pollutionPerSecond = loadNumber(data.pollutionPerSecond, D(0));
+                totalClicks = loadNumber(data.totalClicks, D(0));
+                totalPollution = loadNumber(data.totalPollution, D(0));
                 // Load per-system planet indices
                 if (data.currentPlanetPerSystem) {
                     Object.assign(currentPlanetPerSystem, data.currentPlanetPerSystem);
@@ -4057,7 +4229,7 @@
                                 const planet = systemPlanets[sysId].find(p => p.id === savedPlanet.id);
                                 if (planet) {
                                     planet.unlocked = savedPlanet.unlocked;
-                                    planet.pollution = loadNumber(savedPlanet.pollution, 0);
+                                    planet.pollution = loadNumber(savedPlanet.pollution, D(0));
                                     planet.destroyed = savedPlanet.destroyed || false;
                                 }
                             });
@@ -4076,7 +4248,7 @@
                 }
 
                 // Load toxic waste data
-                toxicWaste = loadNumber(data.toxicWaste, 0);
+                toxicWaste = loadNumber(data.toxicWaste, D(0));
                 lastToxicTime = data.lastToxicTime || Date.now();
                 toxicClickMult = loadNumber(data.toxicClickMult, 1);
                 toxicAutoMult = loadNumber(data.toxicAutoMult, 1);
@@ -4108,10 +4280,10 @@
                 }
 
                 // Load prestige data
-                carbonCredits = loadNumber(data.carbonCredits, 0);
-                lifetimePollution = loadNumber(data.lifetimePollution, 0);
+                carbonCredits = loadNumber(data.carbonCredits, D(0));
+                lifetimePollution = loadNumber(data.lifetimePollution, D(0));
                 timesPrestiged = data.timesPrestiged || 0;
-                prestigeMultiplier = loadNumber(data.prestigeMultiplier, 1);
+                prestigeMultiplier = loadNumber(data.prestigeMultiplier, D(1));
                 prestigeClickMult = loadNumber(data.prestigeClickMult, 1);
                 prestigeAutoMult = loadNumber(data.prestigeAutoMult, 1);
                 prestigeStartBonus = loadNumber(data.prestigeStartBonus, 0);
@@ -4405,12 +4577,12 @@
         };
 
         function getStoryPhase() {
-            if (totalPollution >= 1e30) return 'absolute';
-            if (totalPollution >= 1e23) return 'transcendent';
-            if (totalPollution >= 1e17) return 'cosmic';
-            if (totalPollution >= 1e14) return 'dystopia';
-            if (totalPollution >= 1e11) return 'corporate';
-            if (totalPollution >= 1e8) return 'rising';
+            if (totalPollution.gte(1e30)) return 'absolute';
+            if (totalPollution.gte(1e23)) return 'transcendent';
+            if (totalPollution.gte(1e17)) return 'cosmic';
+            if (totalPollution.gte(1e14)) return 'dystopia';
+            if (totalPollution.gte(1e11)) return 'corporate';
+            if (totalPollution.gte(1e8)) return 'rising';
             return 'early';
         }
 
@@ -4657,7 +4829,7 @@
             const initSystem = getCurrentSystem();
             planetNameDisplay.textContent = planet.name;
             currentPlanetNameDisplay.textContent = planet.name;
-            const initTotalMult = planet.multiplier * prestigePlanetBoost * initSystem.multiplier * prestigeSystemBoost * prestigeMultiplier;
+            const initTotalMult = D(planet.multiplier).mul(prestigePlanetBoost).mul(initSystem.multiplier).mul(prestigeSystemBoost).mul(prestigeMultiplier);
             multiplierDisplay.textContent = `Multiplier: x${formatNumber(initTotalMult)}`;
             planetsDestroyedDisplay.textContent = planetsDestroyed;
             renderPlanetTabs();
