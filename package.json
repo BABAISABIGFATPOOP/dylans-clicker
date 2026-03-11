@@ -1,6 +1,6 @@
 {
   "name": "dylans-clicker",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Pollution Clicker - Desktop Edition",
   "main": "main.js",
   "scripts": {
