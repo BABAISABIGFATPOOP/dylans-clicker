@@ -3014,8 +3014,8 @@
 
         function calculatePrestigeGain() {
             // Need at least 1 trillion total pollution to earn carbon credits
-            if (totalPollution.lt(1e12)) return 0;
-            return Math.floor(Math.pow(totalPollution / 1e12, 0.5) * prestigeCreditBoost);
+            if (totalPollution.lt(1e12)) return D(0);
+            return D(Math.floor(Math.pow(totalPollution.toNumber() / 1e12, 0.5) * prestigeCreditBoost));
         }
 
         function calculatePrestigeMultiplier(credits) {
@@ -3038,12 +3038,12 @@
             prestigePotentialDisplay.textContent = potential.gt(0) ? '+' + formatNumber(potential) : '0';
             prestigeMultDisplay.textContent = formatNumber(prestigeMultiplier);
 
-            const futureCredits = carbonCredits + potential;
+            const futureCredits = D(carbonCredits).add(potential);
             const futureMult = calculatePrestigeMultiplier(futureCredits);
             prestigeMultAfter.textContent = formatNumber(futureMult);
             modalPrestigeGain.textContent = formatNumber(potential);
 
-            confirmPrestigeBtn.disabled = potential < 1;
+            confirmPrestigeBtn.disabled = potential.lt(1);
 
             // Update rebirths display
             const timesPrestigedDisplay = document.getElementById('times-prestiged');
