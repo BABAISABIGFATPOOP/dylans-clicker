@@ -2257,7 +2257,7 @@
                     basePower += upgrade.owned * upgrade.power * getUpgradeLevelMultiplier(upgrade.id);
                 }
             }
-            return basePower;
+            return D(basePower);
         }
 
         function calculateAutoPower() {
@@ -2267,7 +2267,7 @@
                     basePower += upgrade.owned * upgrade.power * getUpgradeLevelMultiplier(upgrade.id);
                 }
             }
-            return basePower;
+            return D(basePower);
         }
 
         // Sound System
@@ -2954,7 +2954,7 @@
                     });
                 }
                 carbonCredits = loadNumber(data.carbonCredits, D(0));
-                lifetimePollution = loadNumber(data.lifetimePollution, D(0));
+                lifetimePollution = D(loadNumber(data.lifetimePollution, 0));
                 timesPrestiged = data.timesPrestiged || 0;
                 prestigeMultiplier = loadNumber(data.prestigeMultiplier, D(1));
                 prestigeClickMult = loadNumber(data.prestigeClickMult, 1);
@@ -3539,7 +3539,7 @@
             pollution = D(0);
             pollutionPerClick = D(1);
             pollutionPerSecond = D(0);
-            totalClicks = 0;
+            totalClicks = D(0);
             totalPollution = D(0);
 
             // Reset toxic waste
@@ -3564,7 +3564,7 @@
 
             // Reset prestige (but keep lifetime stats for story)
             carbonCredits = D(0);
-            lifetimePollution = 0;
+            lifetimePollution = D(0);
             timesPrestiged = 0;
             prestigeMultiplier = D(1);
             prestigeClickMult = 1;
@@ -4298,7 +4298,7 @@
 
                 // Load prestige data
                 carbonCredits = loadNumber(data.carbonCredits, D(0));
-                lifetimePollution = loadNumber(data.lifetimePollution, D(0));
+                lifetimePollution = D(loadNumber(data.lifetimePollution, 0));
                 timesPrestiged = data.timesPrestiged || 0;
                 prestigeMultiplier = loadNumber(data.prestigeMultiplier, D(1));
                 prestigeClickMult = loadNumber(data.prestigeClickMult, 1);
