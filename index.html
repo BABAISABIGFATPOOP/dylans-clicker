@@ -1166,6 +1166,21 @@
             text-align: center;
         }
 
+        .auth-link {
+            background: none;
+            border: none;
+            color: #6c63ff;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 0;
+        }
+
+        .auth-link:hover {
+            color: #8b83ff;
+        }
+
         .menu-btn:disabled {
             opacity: 0.3;
             cursor: not-allowed;
@@ -1214,6 +1229,7 @@
                     <button class="auth-btn" id="btn-sign-in">SIGN IN</button>
                     <button class="auth-btn" id="btn-sign-up">SIGN UP</button>
                 </div>
+                <button class="auth-link" id="btn-forgot-password">Forgot password?</button>
                 <div class="auth-divider">— or —</div>
                 <button class="auth-btn google" id="btn-google">SIGN IN WITH GOOGLE</button>
                 <div id="auth-error"></div>
@@ -4746,6 +4762,23 @@
             }
         }
 
+        async function resetPassword() {
+            if (!firebaseReady) return showAuthError('Firebase not configured');
+            const email = document.getElementById('auth-email').value.trim();
+            if (!email) return showAuthError('Enter your email first');
+            clearAuthError();
+            try {
+                await auth.sendPasswordResetEmail(email);
+                showAuthError('Password reset email sent! Check your inbox.');
+                document.getElementById('auth-error').style.color = '#32c850';
+                setTimeout(() => {
+                    document.getElementById('auth-error').style.color = '';
+                }, 5000);
+            } catch (e) {
+                showAuthError(e.message.replace('Firebase: ', ''));
+            }
+        }
+
         async function signOutUser() {
             if (!firebaseReady || !auth) return;
             if (gameStarted) {
@@ -4805,6 +4838,7 @@
         document.getElementById('btn-sign-up').addEventListener('click', signUpWithEmail);
         document.getElementById('btn-google').addEventListener('click', signInWithGoogle);
         document.getElementById('btn-sign-out').addEventListener('click', signOutUser);
+        document.getElementById('btn-forgot-password').addEventListener('click', resetPassword);
 
         // Allow Enter key to sign in from password field
         document.getElementById('auth-password').addEventListener('keydown', (e) => {
