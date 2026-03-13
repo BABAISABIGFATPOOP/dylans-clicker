@@ -1242,9 +1242,9 @@
 
         <div class="menu-subtitle">Select difficulty to start</div>
         <div class="menu-buttons">
-            <button class="menu-btn easy" data-difficulty="easy">EASY</button>
-            <button class="menu-btn hard" data-difficulty="hard">HARD</button>
-            <button class="menu-btn impossible" data-difficulty="impossible">IMPOSSIBLE</button>
+            <button class="menu-btn easy" data-difficulty="easy" onclick="try{startGame('easy')}catch(e){alert(e.message)}">EASY</button>
+            <button class="menu-btn hard" data-difficulty="hard" onclick="try{startGame('hard')}catch(e){alert(e.message)}">HARD</button>
+            <button class="menu-btn impossible" data-difficulty="impossible" onclick="try{startGame('impossible')}catch(e){alert(e.message)}">IMPOSSIBLE</button>
         </div>
         <button class="menu-btn update-btn" id="update-btn">UPDATE — v1.1.1</button>
     </div>
