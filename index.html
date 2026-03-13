@@ -977,6 +977,7 @@
             align-items: center;
             justify-content: center;
             font-family: 'Courier New', Courier, monospace;
+            overflow-y: auto;
         }
 
         #main-menu.hidden {
@@ -4875,9 +4876,14 @@
         }
 
         // Menu button clicks
-        document.querySelectorAll('.menu-btn').forEach(btn => {
+        document.querySelectorAll('.menu-btn[data-difficulty]').forEach(btn => {
             btn.addEventListener('click', () => {
-                startGame(btn.dataset.difficulty);
+                try {
+                    startGame(btn.dataset.difficulty);
+                } catch (e) {
+                    console.error('startGame error:', e);
+                    alert('Error starting game: ' + e.message);
+                }
             });
         });
 
